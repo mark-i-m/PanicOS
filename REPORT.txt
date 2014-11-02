@@ -1,0 +1,12 @@
+
+- Explain how the arguments make it all the way from user program invoking
+  execv until they turn into main's argc, and argv for the target program
+
+- My implementation of execv in syscall.cc is not secure. Show a user
+  program that can read any memory address by exploiting my bad code
+
+- How would change the code to protect against this attack
+
+- What do we need to change in order to implement input and output
+  redirection and pipes in the shell?
+
