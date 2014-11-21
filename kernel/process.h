@@ -108,7 +108,9 @@ public:
     virtual signal_action_t getSignalAction(signal_t);
     virtual signal_action_t setSignalAction(signal_t);
     virtual void signal(signal_t sig) {
-        signalQueue->addTail(new Signal(sig));
+        signalMutex->lock();
+        signalQueue->addTail(Signal(sig));
+        signalMutex->unlock();
     }
 
     // create a process with an optional name

@@ -138,6 +138,10 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         {
               return U8250::it->get();
         }
+    case 0xff: /* sys_sigret */
+        {
+            return -1;
+        }
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

@@ -19,6 +19,9 @@ enum signal_action_t {
     EXIT // can be handled
 };
 
+struct sigframe;
+struct jumpercode;
+
 class Signal{
     private:
     signal_t sig;
@@ -31,6 +34,9 @@ class Signal{
 
     /* Handle this signal */
     void doSignal();
+    void setupFrame();
+    sigframe *getSignalFrame();
+    jumpercode *putJumperCode(sigframe*);
 };
 
 #endif
