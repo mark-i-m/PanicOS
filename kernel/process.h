@@ -9,6 +9,7 @@
 #include "vmm.h"
 #include "resource.h"
 #include "table.h"
+#include "signal.h"
 
 class Timer;
 
@@ -78,7 +79,7 @@ public:
     uint32_t iCount;
 
     // The current process, nullptr -> none
-    static Process *current;                  
+    static Process *current;
 
     // an optional name
     const char* name;
@@ -97,6 +98,10 @@ public:
 
     // Resources
     Table *resources;
+
+    // Signals
+    SignalHandler *signalHandler; // signal handler
+    SimpleQueue<Signal*> *signals; // pending signals
 
     // create a process with an optional name
     // the new process inserts itself in the ready queue
@@ -140,7 +145,7 @@ public:
     //    - a process is picked to run form the ready queue
     //    - if no other process is ready, the yielding process
     //      runs again
-    // 
+    //
     // A process that wants to exit can call yield after setting current
     // process to null
     static void yield();
@@ -187,7 +192,7 @@ public:
     // execv
     long execv(const char* fileName, SimpleQueue<const char*> *list, long count);
 
-    // Resource methods 
+    // Resource methods
     virtual Resource* forkMe() {
         return nullptr;
     }

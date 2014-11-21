@@ -68,7 +68,7 @@ extern "C" void runProcess() {
    corrupting neighbors */
 #define FUDGE 128
 
-Process::Process(const char* name, Table *resources_) : 
+Process::Process(const char* name, Table *resources_) :
     Resource(ResourceType::PROCESS), name(name), resources(resources_)
 {
     //Debug::printf("Process::Process %p",this);
@@ -98,11 +98,14 @@ Process::Process(const char* name, Table *resources_) :
     }
     Resource::ref(resources);
 
+    signals = new SimpleQueue<Signal*>();
+
     /* We always start with a refcount of 1 */
     count.set(1);
 }
 
 Process::~Process() {
+    delete signals;
     if (stack) {
         delete[] (stack - FUDGE);
         stack = 0;
@@ -140,7 +143,7 @@ long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long a
     /* Copy args to user space */
     long userESP = 0xfffffff0;
     MISSING();
-  
+
     /* clear resources */
     resources->closeAll();
 
@@ -240,7 +243,7 @@ void Process::exit(long exitCode) {
         p->resources->closeAll();
         p->onExit();
         p->doneEvent.signal();
-        
+
         Process::disable();
         reaperQueue->addTail(p);
         p->state = TERMINATED;
@@ -274,6 +277,7 @@ void Process::dispatch(Process *prev) {
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
     checkKilled();
+    checkSignals();
 }
 
 void Process::yield(Queue<Process*> *q) {
@@ -300,7 +304,7 @@ void Process::yield(Queue<Process*> *q) {
             idleProcess = new IdleProcess();
             idleProcess->start();
         }
-        next = idleProcess;            
+        next = idleProcess;
     } else {
         next = readyQueue->removeHead();
     }
@@ -396,7 +400,7 @@ void Process::enable() {
     if (me) {
         uint32_t c = me->disableCount;
         if (c == 0) {
-            Debug::panic("disable = %d",c);        
+            Debug::panic("disable = %d",c);
         } else if (c == 1) {
             me->disableCount = 0;
             Pic::on();
@@ -404,7 +408,7 @@ void Process::enable() {
             me->disableCount --;
         }
     }
-}    
+}
 
 void Process::startIrq() {
     Process* me = Process::current;

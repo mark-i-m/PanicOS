@@ -7,4 +7,13 @@
 #include "semaphore.h"
 #include "stdint.h"
 
+typedef void (*SignalHandler)(uint32_t);
+
+class Signal {
+    public:
+        uint32_t num; // signal number
+
+        Signal() {}
+};
+
 #endif
