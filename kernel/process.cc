@@ -98,14 +98,14 @@ Process::Process(const char* name, Table *resources_) :
     }
     Resource::ref(resources);
 
-    signals = new SimpleQueue<Signal*>();
+    signalQueue = new SimpleQueue<Signal*>();
 
     /* We always start with a refcount of 1 */
     count.set(1);
 }
 
 Process::~Process() {
-    delete signals;
+    delete signalQueue;
     if (stack) {
         delete[] (stack - FUDGE);
         stack = 0;
@@ -277,7 +277,9 @@ void Process::dispatch(Process *prev) {
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
     checkKilled();
-    checkSignals();
+    signalMutex->lock();
+    Signal::checkSignals(signalQueue);
+    signalMutex->unlock();
 }
 
 void Process::yield(Queue<Process*> *q) {

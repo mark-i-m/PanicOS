@@ -6,14 +6,31 @@
 #include "atomic.h"
 #include "semaphore.h"
 #include "stdint.h"
+#include "process.h"
 
 typedef void (*SignalHandler)(uint32_t);
 
-class Signal {
-    public:
-        uint32_t num; // signal number
+enum signal_t {
+    SIGALRM
+};
 
-        Signal() {}
+enum signal_action_t {
+    IGNORE, // will not trigger the sig handler
+    EXIT // can be handled
+};
+
+class Signal{
+    private:
+    signal_t sig;
+
+    public:
+    Signal(signal_t sig) : sig(sig) {}
+
+    /* Handle all signals in this process signal queue */
+    static void checkSignals(SimpleQueue<Signal> *signals);
+
+    /* Handle this signal */
+    void doSignal();
 };
 
 #endif

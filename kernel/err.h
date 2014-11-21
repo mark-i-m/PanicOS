@@ -8,5 +8,4 @@
 #define ERR_NOT_POSSIBLE (-1004)
 #define ERR_PAGE_FAULT (-1005)
 
-
 #endif

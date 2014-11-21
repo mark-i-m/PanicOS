@@ -101,8 +101,15 @@ public:
 
     // Signals
     SignalHandler *signalHandler; // signal handler
-    SimpleQueue<Signal*> *signalQueue; // pending signals
+    SimpleQueue<Signal> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
+
+    // get and set this process's action for the signal
+    virtual signal_action_t getSignalAction(signal_t);
+    virtual signal_action_t setSignalAction(signal_t);
+    virtual void signal(signal_t sig) {
+        signalQueue->addTail(new Signal(sig));
+    }
 
     // create a process with an optional name
     // the new process inserts itself in the ready queue
