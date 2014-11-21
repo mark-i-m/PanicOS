@@ -101,7 +101,8 @@ public:
 
     // Signals
     SignalHandler *signalHandler; // signal handler
-    SimpleQueue<Signal*> *signals; // pending signals
+    SimpleQueue<Signal*> *signalQueue; // pending signals
+    Mutex *signalMutex; // protects the signal queue
 
     // create a process with an optional name
     // the new process inserts itself in the ready queue
