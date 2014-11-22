@@ -24,8 +24,8 @@ syscallTrap:
     Arguments:
 
             context
-context->   syscall #               
-            a0 
+context->   syscall #
+            a0
             a1
             user %ebx
             user %esi
@@ -72,7 +72,7 @@ switchToUser:
         push %edx               # ring 3 CS
 
 	mov userDataSeg,%edx
-	
+
 	push %ecx               # user EIP
 
 	movw %dx,%ds            # no more memory refs until iret
@@ -93,7 +93,7 @@ cs32:
                                #     is equals to the oldval
                                #   - if it failed, %eax will be loaded with
                                #     the oldval
-	
+
 	# contextSwitch(long* currentESP, long nextESP, long eflags)
         .global contextSwitch
 contextSwitch:
@@ -189,12 +189,12 @@ vmm_on:
 	or $0x80000000,%eax
 	mov %eax,%cr0
 	ret
-	
+
 	.global getcr0
 getcr0:
 	mov %cr0,%eax
 	ret
-	
+
 	.global getcr3
 getcr3:
 	mov %cr3,%eax
@@ -320,6 +320,10 @@ irq_common:
 	push %edi
 	push %ebp
 
+    # mov the user esp to
+    # edx to save it in pic_irq
+    mov 40(%esp), %edx
+
 	push %ds
 	mov kernelDataSeg,%ecx
 	mov %cx,%ds
@@ -327,12 +331,13 @@ irq_common:
 	mov %cr2,%ebp
 	push %ebp
 
+    push %edx
 	push %eax
 
 	.extern pic_irq
 	call pic_irq
 
-	add $4,%esp    /* pop argument */
+	add $8,%esp    /* pop arguments */
 
 	pop %ebp
 	mov %ebp,%cr2

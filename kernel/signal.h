@@ -6,7 +6,6 @@
 #include "atomic.h"
 #include "semaphore.h"
 #include "stdint.h"
-#include "process.h"
 
 typedef void (*SignalHandler)(uint32_t);
 
@@ -30,13 +29,13 @@ class Signal{
     Signal(signal_t sig) : sig(sig) {}
 
     /* Handle all signals in this process signal queue */
-    static void checkSignals(SimpleQueue<Signal> *signals);
+    static void checkSignals(SimpleQueue<Signal*> *signals);
 
     /* Handle this signal */
     void doSignal();
     void setupFrame();
     sigframe *getSignalFrame();
-    jumpercode *putJumperCode(sigframe*);
+    jumpercode *putJumperCode();
 };
 
 #endif

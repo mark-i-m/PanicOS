@@ -1,11 +1,13 @@
 #include "signal.h"
+#include "process.h"
+#include "machine.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // modeled on Linux kernel 3.17.1
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct sigframe {
-    uint32_t returnadr;
+    jumpercode *returnadr;
 	uint32_t eax;
 	uint32_t ecx;
 	uint32_t edx;
@@ -21,36 +23,48 @@ typedef struct sigframe {
 	uint32_t ss;
 } sigframe;
 
-typedef struct jumpercode {
-    char movlecx = 0xB9;
+typedef struct __attribute__((packed)) jumpercode {
+    uint8_t movlecx;
     sigframe *frameptr; // pointer to signal frame
-    char movleax = 0xB8;
-    uint32_t sigret = 0xFF; // sigret syscall number
-    uint16_t int100 = 0xCD64; // int $0x64
+    uint8_t movleax;
+    uint32_t sigret; // sigret syscall number
+    uint16_t int100; // int $0x64
 } jumpercode;
+
+static const jumpercode jumpertemplate = {
+    0xB9,
+    (sigframe*)0x0,
+    0xB8,
+    0xFF,
+    0xCD64
+};
+
+// used from linux kernel
+#define STACK_ALIGN(esp) ((((esp) + 4) & -16ul) - 4)
 
 sigframe *Signal::getSignalFrame(){
     sigframe *frame;
 
-    MISSING();
+    frame = (sigframe*)STACK_ALIGN(Process::current->uesp - sizeof(sigframe));
 
     return frame;
 }
 
-jumpercode *Signal::putJumperCode(sigframe *frame){
+jumpercode *Signal::putJumperCode(){
     jumpercode *jumper;
 
-    MISSING();
-
-    jumper->frameptr = frame;
+    // get address on stack
+    // put it after the sigframe (arbitrary choice)
+    jumper = (jumpercode*)STACK_ALIGN(Process::current->uesp - sizeof(sigframe) - sizeof(jumpercode));
+    *jumper = jumpertemplate;
 
     return jumper;
 }
 
 // will run in kernel mode, with interrupts disabled
-void Signal::checkSignals(SimpleQueue<Signal> *signals) {
+void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
     while(!signals->isEmpty()){
-        signals->removeHead().doSignal();
+        signals->removeHead()->doSignal();
 
         Process::current->checkKilled(); // in case a signal killed it
     }
@@ -72,21 +86,23 @@ void Signal::doSignal(){
                 // kill the process with the signal code
                 Process::current->kill(sig);
             }
-
             return;
     }
 }
 
 void Signal::setupFrame(){
 
+    // set up routine to come back to kernel mode
+    jumpercode *jumper = putJumperCode();
+
     // set up stack frame for handler:
     // RA for user code will be set to the above
     // routine
     sigframe *frame = getSignalFrame();
 
-    // set up routine to come back to kernel mode
-    jumpercode *jumper = putJumperCode(frame);
+    jumper->frameptr = frame;
+    frame->returnadr = jumper;
 
     // switch to user mode
-    MISSING();
+    switchToUser((uint32_t)Process::current->signalHandler, (uint32_t)frame, 0);
 }

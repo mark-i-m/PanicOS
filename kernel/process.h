@@ -63,6 +63,9 @@ public:
     // A place for context switching to save the kernel ESP
     long kesp;
 
+    // A place for interrupts to save the user ESP
+    long uesp;
+
     // set to true if the process is killed
     bool isKilled;
 
@@ -101,15 +104,16 @@ public:
 
     // Signals
     SignalHandler *signalHandler; // signal handler
-    SimpleQueue<Signal> *signalQueue; // pending signals
+    SimpleQueue<Signal*> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
 
     // get and set this process's action for the signal
     virtual signal_action_t getSignalAction(signal_t);
-    virtual signal_action_t setSignalAction(signal_t);
+    virtual void setSignalAction(signal_t, signal_action_t);
+
     virtual void signal(signal_t sig) {
         signalMutex->lock();
-        signalQueue->addTail(Signal(sig));
+        signalQueue->addTail(new Signal(sig));
         signalMutex->unlock();
     }
 

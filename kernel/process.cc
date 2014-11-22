@@ -255,6 +255,14 @@ void Process::exit(long exitCode) {
     }
 }
 
+signal_action_t Process::getSignalAction(signal_t sig) {
+    return EXIT;
+}
+
+void Process::setSignalAction(signal_t sig, signal_action_t act) {
+    Debug::printf("setting signal action");
+}
+
 /* switch to the next process */
 void Process::dispatch(Process *prev) {
     state = RUNNING;
@@ -277,6 +285,7 @@ void Process::dispatch(Process *prev) {
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
     checkKilled();
+
     signalMutex->lock();
     Signal::checkSignals(signalQueue);
     signalMutex->unlock();

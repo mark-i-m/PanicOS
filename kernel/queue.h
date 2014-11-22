@@ -21,6 +21,7 @@ private:
     Node *last;
 public:
     SimpleQueue() : first(0), last(0) {}
+    virtual ~SimpleQueue() {}
     void addTail(T v) {
         Node *n = new Node();
         n->value = v;
@@ -49,7 +50,7 @@ public:
         delete p;
         return v;
     }
-    
+
 };
 
 #endif
