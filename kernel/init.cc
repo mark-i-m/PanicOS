@@ -8,10 +8,13 @@ Init::Init() : Process("init",nullptr) {
 }
 
 long Init::run() {
-    SimpleQueue<const char*> argv;
-    argv.addTail(K::strdup("shell"));
 
-    execv("shell",&argv,1);
+    trace("SIGALRM");
+    Process::current->signal(SIGALRM);
+
+    while(1) {
+        trace("looping");      
+    }
 
     Debug::shutdown("What?");
     return 0;

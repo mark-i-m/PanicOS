@@ -99,12 +99,16 @@ Process::Process(const char* name, Table *resources_) :
     Resource::ref(resources);
 
     signalQueue = new SimpleQueue<Signal*>();
+    signalMutex = new Mutex();
+
+    uesp = 0;
 
     /* We always start with a refcount of 1 */
     count.set(1);
 }
 
 Process::~Process() {
+    delete signalMutex;
     delete signalQueue;
     if (stack) {
         delete[] (stack - FUDGE);
@@ -121,6 +125,7 @@ void Process::start() {
 }
 
 void Process::kill(long code) {
+    trace("killed with code %d", code);
 
     Process::disable();
     if (!isKilled) {
@@ -286,9 +291,12 @@ void Process::dispatch(Process *prev) {
     }
     checkKilled();
 
+    //trace("locking");
     signalMutex->lock();
+    //trace("going check signals; interupts are %d; iDepth = %d", disableCount, iDepth);
     Signal::checkSignals(signalQueue);
     signalMutex->unlock();
+    //trace("unlocking");
 }
 
 void Process::yield(Queue<Process*> *q) {

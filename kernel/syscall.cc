@@ -140,6 +140,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 0xff: /* sys_sigret */
         {
+            Process::trace("sys_sigret");
             return -1;
         }
     default:

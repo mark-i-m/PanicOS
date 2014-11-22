@@ -112,9 +112,11 @@ public:
     virtual void setSignalAction(signal_t, signal_action_t);
 
     virtual void signal(signal_t sig) {
-        signalMutex->lock();
+        //signalMutex->lock();
+        Process::disable();
         signalQueue->addTail(new Signal(sig));
-        signalMutex->unlock();
+        Process::enable();
+        //signalMutex->unlock();
     }
 
     // create a process with an optional name

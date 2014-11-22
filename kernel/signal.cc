@@ -64,14 +64,17 @@ jumpercode *Signal::putJumperCode(){
 // will run in kernel mode, with interrupts disabled
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
     while(!signals->isEmpty()){
+        // wait for this process to enter user mode
+        if((uint32_t)Process::current->uesp < 0x80000000) return;
         signals->removeHead()->doSignal();
-
         Process::current->checkKilled(); // in case a signal killed it
     }
 }
 
 // will run in kernel mode, with interrupts disabled
 void Signal::doSignal(){
+    Process::trace("doing signal %d", sig);
+
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
 
