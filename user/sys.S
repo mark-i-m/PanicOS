@@ -158,3 +158,12 @@ signal:
 	mov 8(%esp),%edx
 	int $100
 	ret
+
+    # long handler(void *sighandler)
+    .global handler
+handler:
+    mov $16,%eax
+    mov 4(%esp),%ecx
+    mov $0, %edx
+    int $100
+    ret

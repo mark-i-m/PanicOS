@@ -149,6 +149,11 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             Process::trace("done");
             return 0;
         }
+    case 16: /* handler */
+        {
+            Process::current->signalHandler = (SignalHandler*)a0;
+            return 0;
+        }
     case 0xff: /* sys_sigret */
         {
             Process::trace("sys_sigret");

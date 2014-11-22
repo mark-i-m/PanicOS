@@ -8,19 +8,20 @@
 
 typedef struct sigframe {
     jumpercode *returnadr;
-	uint32_t eax;
-	uint32_t ecx;
-	uint32_t edx;
-	uint32_t ebx;
-	uint32_t esi;
-	uint32_t edi;
-	uint32_t ebp;
-	uint32_t ds;
-	uint32_t eip;
-	uint32_t cs;
-	uint32_t flags;
-	uint32_t esp;
+    uint32_t signal;
 	uint32_t ss;
+	uint32_t esp;
+	uint32_t flags;
+	uint32_t cs;
+	uint32_t eip;
+	uint32_t ds;
+	uint32_t ebp;
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebx;
+	uint32_t edx;
+	uint32_t ecx;
+	uint32_t eax;
 } sigframe;
 
 typedef struct __attribute__((packed)) jumpercode {
@@ -28,7 +29,8 @@ typedef struct __attribute__((packed)) jumpercode {
     sigframe *frameptr; // pointer to signal frame
     uint8_t movleax;
     uint32_t sigret; // sigret syscall number
-    uint16_t int100; // int $0x64
+    uint8_t interrupt; // int $0x64
+    uint8_t syscall;
 } jumpercode;
 
 static const jumpercode jumpertemplate = {
@@ -36,7 +38,8 @@ static const jumpercode jumpertemplate = {
     (sigframe*)0x0,
     0xB8,
     0xFF,
-    0xCD64
+    0xCD,
+    0x64
 };
 
 // used from linux kernel
@@ -46,6 +49,22 @@ sigframe *Signal::getSignalFrame(){
     sigframe *frame;
 
     frame = (sigframe*)STACK_ALIGN(Process::current->uesp - sizeof(sigframe));
+
+    // save kernel context
+	frame->eax = 0xEA;
+	frame->ecx = 0xEC;
+	frame->edx = 0xED;
+	frame->ebx = 0xEB;
+	frame->esi = 0x1;
+	frame->edi = 0x1;
+	frame->ebp = 0x1;
+	frame->ds = 0x1;
+	frame->eip = 0x1;
+	frame->cs = 0x1;
+	frame->flags = 0x1;
+	frame->esp = 0x1;
+	frame->ss = 0x1;
+    frame->signal = sig;
 
     return frame;
 }
