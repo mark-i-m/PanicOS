@@ -16,5 +16,6 @@ extern long down(long sem);
 extern long fork();
 extern long join(long proc);
 extern long shutdown();
+extern long signal(long pd, long sig);
 
 #endif

@@ -1,4 +1,4 @@
-PROGS = shell ls shutdown echo cat
+PROGS = shell ls shutdown echo cat test
 
 all : $(PROGS)
 
@@ -13,6 +13,8 @@ ls : CFILES=ls.c libc.c heap.c
 shutdown : CFILES=shutdown.c libc.c heap.c
 
 cat : CFILES=cat.c libc.c heap.c
+
+test : CFILES=test.c libc.c heap.c
 
 $(PROGS) : % : Makefile $(OFILES)
 	ld -N -m elf_i386 -e start -Ttext=0x80000000 -o $@ $(OFILES)

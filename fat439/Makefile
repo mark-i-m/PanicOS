@@ -12,13 +12,13 @@ mkfs : mkfs.o
 .SECONDARY :
 
 
-FILES = ../user/shutdown ../user/shutdown.c ../user/shell.c ../user/shell ../user/ls.c ../user/ls ../user/echo ../user/echo.c ../user/cat.c ../user/cat f1.txt f2.txt panic
+FILES = ../user/shutdown ../user/shutdown.c ../user/shell.c ../user/shell ../user/ls.c ../user/ls ../user/echo ../user/echo.c ../user/cat.c ../user/cat f1.txt f2.txt panic ../user/test
 
 ../user/% :
 	make -C ../user
 
 user.img : mkfs $(FILES)
-	./mkfs user.img 1024 $(FILES) 
+	./mkfs user.img 1024 $(FILES)
 
 %.o :  Makefile %.c
 	gcc -c -MD $(CFLAGS) $*.c

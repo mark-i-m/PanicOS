@@ -138,6 +138,16 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         {
               return U8250::it->get();
         }
+    case 15: /* signal */
+        {
+            Process::trace("made it to syscallHandler");
+            Process *proc = (Process*) Process::current->resources->get(a0,
+                 ResourceType::PROCESS);
+            if (proc == nullptr) return ERR_INVALID_ID;
+            Process::trace("sending signal %d to pd=%d", a1, a0);
+            proc->signal((signal_t)a1);
+            return 0;
+        }
     case 0xff: /* sys_sigret */
         {
             Process::trace("sys_sigret");

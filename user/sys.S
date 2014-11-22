@@ -150,3 +150,11 @@ getchar:
 	int $100
 	ret
 
+    # long signal(long pd, long sig)
+	.global signal
+signal:
+	mov $15,%eax
+	mov 4(%esp),%ecx
+	mov 8(%esp),%edx
+	int $100
+	ret
