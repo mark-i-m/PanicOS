@@ -98,8 +98,11 @@ Process::Process(const char* name, Table *resources_) :
     }
     Resource::ref(resources);
 
-    signalQueue = new SimpleQueue<Signal*>();
     signalMutex = new Mutex();
+
+    signalMutex->lock();
+    signalQueue = new SimpleQueue<Signal*>();
+    signalMutex->unlock();
 
     uesp = 0;
 
@@ -136,27 +139,67 @@ void Process::kill(long code) {
     checkKilled();
 }
 
+long elfSanity(Elf32_Ehdr *elf_header){
+
+    // sanity check
+    if (elf_header->e_ident[EI_MAG0] != ELFMAG0  ||
+        elf_header->e_ident[EI_MAG1] != ELFMAG1  ||
+        elf_header->e_ident[EI_MAG2] != ELFMAG2  ||
+        elf_header->e_ident[EI_MAG3] != ELFMAG3  ){
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_ident[EI_CLASS] != ELFCLASS32 ){
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_ident[EI_DATA] != ELFDATA2LSB ){
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_ident[EI_VERSION] != EV_CURRENT ){
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_ident[EI_OSABI] != ELFOSABI_SYSV ){
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_ident[EI_ABIVERSION] != 0 ){
+        return ERR_NOT_EXECABLE;
+    }
+
+    if (elf_header->e_type != ET_EXEC) {
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_machine != EM_386) {
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_version != EV_CURRENT) {
+        return ERR_NOT_EXECABLE;
+    }
+    if (elf_header->e_entry < 0x8000000) {
+        return ERR_NOT_EXECABLE;
+    }
+
+    return 0;
+
+}
+
 long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long argc) {
     File *prog = FileSystem::rootfs->rootdir->lookupFile(fileName);
     if (prog == nullptr) {
         return ERR_NOT_FOUND;
     }
 
-    /* Prepare address space for exec */
-    addressSpace.exec();
-
-    /* Copy args to user space */
-    long userESP = 0xfffffff0;
-    MISSING();
-
-    /* clear resources */
-    resources->closeAll();
-
     /* read ELF */
     Elf32_Ehdr hdr;
 
     prog->seek(0);
     prog->readFully(&hdr,sizeof(Elf32_Ehdr));
+
+    /* check that this is an elf!*/
+    if(elfSanity(&hdr) < 0){
+        return ERR_NOT_EXECABLE;
+    }
+
+    /* Prepare address space for exec */
+    addressSpace.exec();
 
     uint32_t hoff = hdr.e_phoff;
 
@@ -175,6 +218,61 @@ long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long a
             prog->readFully(p,filesz);
         }
     }
+
+    /* clear resources */
+    resources->closeAll();
+
+    /* Copy args to user space */
+    long userESP = 0xfffffff0;
+
+    // Add one for the file name
+    argc++;
+
+    // Push the user args to the user stack
+    // must also have room for the terminating
+    // null ptr and prog name
+    userESP -= sizeof(char**) * (argc + 1);
+    char **argv = (char**)userESP;
+
+    // push prog name
+    userESP -= K::strlen(fileName) + 1;
+    argv[0] = (char *)userESP;
+    memcpy((void*)userESP, (void*)fileName, K::strlen(fileName));
+    ((char*)userESP)[K::strlen(fileName)] = 0;
+
+    int i = 1;
+    while(!args->isEmpty()){
+        // get the argument
+        const char *arg = args->removeHead();
+
+        // make room for it
+        userESP -= K::strlen(arg) + 1;
+
+        // store its location
+        argv[i++] = (char*)userESP;
+
+        // copy it
+        memcpy((void*)userESP, (void*)arg, K::strlen(arg));
+
+        // null terminate
+        ((char*)userESP)[K::strlen(arg)] = 0;
+
+        // trace("arg: %s",arg);
+
+        // delete it
+        delete arg;
+    }
+
+    // null terminated
+    argv[argc+1] = 0;
+
+    // push argv**
+    userESP -= 4;
+    *(char***)userESP = argv;
+
+    // Push argc
+    userESP -= 4;
+    *(long*)userESP = argc;
 
     switchToUser(hdr.e_entry, userESP,0);
 
@@ -291,12 +389,11 @@ void Process::dispatch(Process *prev) {
     }
     checkKilled();
 
-    //trace("locking");
+    //Debug::printf("going to check signals\n");
     signalMutex->lock();
-    //trace("going check signals; interupts are %d; iDepth = %d", disableCount, iDepth);
     Signal::checkSignals(signalQueue);
     signalMutex->unlock();
-    //trace("unlocking");
+    //Debug::printf("checked signals\n");
 }
 
 void Process::yield(Queue<Process*> *q) {

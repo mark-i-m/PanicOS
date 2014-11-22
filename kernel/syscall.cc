@@ -146,6 +146,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             if (proc == nullptr) return ERR_INVALID_ID;
             Process::trace("sending signal %d to pd=%d", a1, a0);
             proc->signal((signal_t)a1);
+            Process::trace("done");
             return 0;
         }
     case 0xff: /* sys_sigret */

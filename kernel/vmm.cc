@@ -44,7 +44,7 @@ uint32_t PhysMem::alloc() {
 void PhysMem::free(uint32_t p) {
     Process::disable();
 
-    Node* n = (Node*) p;    
+    Node* n = (Node*) p;
     n->next = firstFree;
     firstFree = n;
 
@@ -82,7 +82,7 @@ AddressSpace::~AddressSpace() {
     }
     PhysMem::free((uint32_t) pd);
 }
-    
+
 void AddressSpace::dump() {
     for (int i0 = 0; i0 < 1024; i0++) {
         uint32_t pde = pd[i0];
@@ -116,7 +116,7 @@ void AddressSpace::punmap(uint32_t va) {
     invlpg(va);
     Process::enable();
 }
-        
+
 void AddressSpace::pmap(uint32_t va, uint32_t pa, bool forUser, bool forWrite) {
     Process::disable();
     invlpg(va);
@@ -158,7 +158,7 @@ void AddressSpace::fork(AddressSpace* child) {
                     uint32_t src = pte & ~0xfff;
                     uint32_t dest = PhysMem::alloc();
                     memcpy((void*)dest,(void*)src,PhysMem::FRAME_SIZE);
-                    child->pmap(va,dest,true,true); 
+                    child->pmap(va,dest,true,true);
                 }
             }
         }
@@ -186,6 +186,7 @@ void AddressSpace::exec() {
 }
 
 extern "C" void vmm_pageFault(long* context, uintptr_t va) {
+    Process::trace("page fault: eip=%X", context[10]);
     Process* proc = Process::current;
     if (!proc) {
         for (int i=0; i<20; i++) {

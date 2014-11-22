@@ -9,12 +9,10 @@ Init::Init() : Process("init",nullptr) {
 
 long Init::run() {
 
-    trace("SIGALRM");
-    Process::current->signal(SIGALRM);
+    SimpleQueue<const char*> argv;
+    argv.addTail(K::strdup("test"));
 
-    while(1) {
-        trace("looping");      
-    }
+    execv("test",&argv,1);
 
     Debug::shutdown("What?");
     return 0;
