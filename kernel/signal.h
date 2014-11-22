@@ -18,8 +18,25 @@ enum signal_action_t {
     EXIT // can be handled
 };
 
-struct sigframe;
 struct jumpercode;
+
+typedef struct sigframe {
+    jumpercode *returnadr;
+    uint32_t signal;
+    uint32_t kernelRA;
+	//uint32_t ss;
+	uint32_t esp;
+	uint32_t flags;
+	//uint32_t cs;
+	uint32_t eip;
+	//uint32_t ds;
+	uint32_t ebp;
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebx;
+    uint32_t disableCount;
+    uint32_t iDepth;
+} sigframe;
 
 class Signal{
     private:

@@ -1,28 +1,11 @@
 #include "signal.h"
 #include "process.h"
 #include "machine.h"
+#include "pic.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // modeled on Linux kernel 3.17.1
 ////////////////////////////////////////////////////////////////////////////////
-
-typedef struct sigframe {
-    jumpercode *returnadr;
-    uint32_t signal;
-	uint32_t ss;
-	uint32_t esp;
-	uint32_t flags;
-	uint32_t cs;
-	uint32_t eip;
-	uint32_t ds;
-	uint32_t ebp;
-	uint32_t edi;
-	uint32_t esi;
-	uint32_t ebx;
-	uint32_t edx;
-	uint32_t ecx;
-	uint32_t eax;
-} sigframe;
 
 typedef struct __attribute__((packed)) jumpercode {
     uint8_t movlecx;
@@ -51,19 +34,14 @@ sigframe *Signal::getSignalFrame(){
     frame = (sigframe*)STACK_ALIGN(Process::current->uesp - sizeof(sigframe));
 
     // save kernel context
-	frame->eax = 0xEA;
-	frame->ecx = 0xEC;
-	frame->edx = 0xED;
-	frame->ebx = 0xEB;
-	frame->esi = 0x1;
-	frame->edi = 0x1;
-	frame->ebp = 0x1;
-	frame->ds = 0x1;
-	frame->eip = 0x1;
-	frame->cs = 0x1;
-	frame->flags = 0x1;
-	frame->esp = 0x1;
-	frame->ss = 0x1;
+    //
+    // we must save disableCount because we have to lower it
+    // back to 0 during the handler (since interrupts are ON
+    // for the user). sys_sigret will restore it before jumping
+    // back to Process::dispatch
+    frame->disableCount = Process::current->disableCount;
+    frame->iDepth = Process::current->iDepth;
+
     frame->signal = sig;
 
     return frame;
@@ -125,6 +103,13 @@ void Signal::setupFrame(){
     jumper->frameptr = frame;
     frame->returnadr = jumper;
 
+    frame->flags = getFlags();
+
+    // enable interupts during the handler
+    Process::current->disableCount = 0;
+    Process::current->iDepth = 0;
+    Pic::on();
+
     // switch to user mode
-    switchToUser((uint32_t)Process::current->signalHandler, (uint32_t)frame, 0);
+    switchToSignal((uint32_t)Process::current->signalHandler, (uint32_t)frame);
 }

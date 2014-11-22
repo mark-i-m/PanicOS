@@ -3,7 +3,7 @@
 void sigHandler(long sig) {
     switch(sig){
         case 0:
-            puts("YAYAYAY!!");
+            puts("YAYAYAY!!\n");
             return;
         default:
             puts("Unknown signal: ");

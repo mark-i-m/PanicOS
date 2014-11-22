@@ -186,7 +186,7 @@ void AddressSpace::exec() {
 }
 
 extern "C" void vmm_pageFault(long* context, uintptr_t va) {
-    Process::trace("page fault: eip=%X", context[10]);
+    //Process::trace("page fault: eip=%X", context[10]);
     Process* proc = Process::current;
     if (!proc) {
         for (int i=0; i<20; i++) {

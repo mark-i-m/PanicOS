@@ -7,6 +7,7 @@
 #include "err.h"
 #include "u8250.h"
 #include "libk.h"
+#include "pic.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -140,13 +141,13 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 15: /* signal */
         {
-            Process::trace("made it to syscallHandler");
+            //Process::trace("made it to syscallHandler");
             Process *proc = (Process*) Process::current->resources->get(a0,
                  ResourceType::PROCESS);
             if (proc == nullptr) return ERR_INVALID_ID;
-            Process::trace("sending signal %d to pd=%d", a1, a0);
+            //Process::trace("sending signal %d to pd=%d", a1, a0);
             proc->signal((signal_t)a1);
-            Process::trace("done");
+            //Process::trace("done");
             return 0;
         }
     case 16: /* handler */
@@ -156,7 +157,22 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 0xff: /* sys_sigret */
         {
-            Process::trace("sys_sigret");
+            // make sure interrupts are disabled while we restore
+            // the kernel state. The interrupt state will be restored
+            // in sys_sigret
+            Pic::off();
+
+            //Process::trace("sys_sigret");
+
+            // restore disableCount (while we have C++)
+            sigframe *frame = (sigframe*) a0;
+
+            Process::current->disableCount = frame->disableCount;
+            Process::current->iDepth = frame->iDepth;
+
+            sys_sigret(a0);
+
+            Debug::shutdown("What?");
             return -1;
         }
     default:

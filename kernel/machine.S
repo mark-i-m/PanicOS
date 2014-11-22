@@ -412,6 +412,69 @@ pageFaultHandler:
         add $4,%esp   /* pop error */
         iret
 
+    # void switchToSignal(long signalHandler, long frame)
+    .global switchToSignal
+switchToSignal:
+    mov 4(%esp), %eax   # signalHandler
+    mov 8(%esp), %ecx   # frame
+
+    mov %esp, 12(%ecx)  # save regs
+    mov %ebp, 24(%ecx)
+    mov %edi, 28(%ecx)
+    mov %esi, 32(%ecx)
+    mov %ebx, 36(%ecx)
+
+    movl $returnToKernel, 8(%ecx) # save return adr to kernel
+
+    mov $0, %edx    # push args
+    push %edx
+    push %ecx
+    push %eax
+
+    call switchToUser
+
+returnToKernel:
+    add $12, %esp    # discard args
+    ret
+
+    # void sys_sigret(long frame)
+    .global sys_sigret
+sys_sigret:
+    mov 4(%esp), %eax   # load the frame pointer
+
+    mov 36(%eax), %ebx  # restore callee saved regs
+    mov 32(%eax), %esi
+    mov 28(%eax), %edi
+    mov 24(%eax), %ebp
+    mov 12(%eax), %esp
+
+    mov 16(%eax), %ecx  # restore flags
+    push %ecx
+    popf
+
+    mov 20(%eax), %edx
+    jmpl *%edx            # restore pc
+
+    # 0   returnadr <= frame
+    # 4   signal
+    # 8   kernelRA;
+	# 12  esp;
+	# 16  flags;
+	# 20  eip;
+	# 24  ebp;
+	# 28  edi;
+	# 32  esi;
+	# 36  ebx;
+    # 40  disableCount;
+    # 44  iDepth;
+
+    # uint32_t getFlags()
+    .global getFlags
+getFlags:
+    pushf
+    pop %eax
+    ret
+
 	/* memset(void* p, int val, size_t sz) */
 	.global memset
 memset:
