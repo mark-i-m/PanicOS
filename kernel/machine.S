@@ -424,7 +424,7 @@ switchToSignal:
     mov %esi, 32(%ecx)
     mov %ebx, 36(%ecx)
 
-    movl $returnToKernel, 8(%ecx) # save return adr to kernel
+    movl $returnToKernel, 20(%ecx) # save return adr to kernel
 
     mov $0, %edx    # push args
     push %edx
@@ -457,7 +457,7 @@ sys_sigret:
 
     # 0   returnadr <= frame
     # 4   signal
-    # 8   kernelRA;
+    # 8   padding;
 	# 12  esp;
 	# 16  flags;
 	# 20  eip;

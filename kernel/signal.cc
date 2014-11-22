@@ -92,6 +92,10 @@ void Signal::doSignal(){
 
 void Signal::setupFrame(){
 
+    uint32_t flags = getFlags();
+
+    Pic::off();
+
     // set up routine to come back to kernel mode
     jumpercode *jumper = putJumperCode();
 
@@ -103,12 +107,13 @@ void Signal::setupFrame(){
     jumper->frameptr = frame;
     frame->returnadr = jumper;
 
-    frame->flags = getFlags();
+    frame->flags = flags;
 
     // enable interupts during the handler
     Process::current->disableCount = 0;
     Process::current->iDepth = 0;
-    Pic::on();
+
+    // Pic::on();
 
     // switch to user mode
     switchToSignal((uint32_t)Process::current->signalHandler, (uint32_t)frame);

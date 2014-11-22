@@ -23,7 +23,7 @@ struct jumpercode;
 typedef struct sigframe {
     jumpercode *returnadr;
     uint32_t signal;
-    uint32_t kernelRA;
+    uint32_t padding;
 	//uint32_t ss;
 	uint32_t esp;
 	uint32_t flags;
