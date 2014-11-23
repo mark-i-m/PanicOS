@@ -16,12 +16,22 @@ void sigHandler(long sig) {
 int main(){
     puts("in test\n");
 
+    long s = semaphore(0);
     long fk = fork();
     if(fk == 0){
         handler((void*)&sigHandler);
-        while(1);
+        up(s);
+        int i;
+        for(i = 0; i < 10000000; i++) {}
+        exit(0xCAFE);
     } else {
+        down(s); // wait until the child has registered the signal handler
         signal(fk, 0);
+        long ret = join(fk);
+        puts("child exited with code = ");
+        puthex(ret);
+        puts("\n");
+        shutdown();
     }
     return 0;
 }

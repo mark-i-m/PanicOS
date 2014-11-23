@@ -106,17 +106,16 @@ public:
     SignalHandler *signalHandler; // signal handler
     SimpleQueue<Signal*> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
+    bool inSignal;
 
     // get and set this process's action for the signal
     virtual signal_action_t getSignalAction(signal_t);
     virtual void setSignalAction(signal_t, signal_action_t);
 
     virtual void signal(signal_t sig) {
-        //signalMutex->lock();
-        Process::disable();
+        signalMutex->lock();
         signalQueue->addTail(new Signal(sig));
-        Process::enable();
-        //signalMutex->unlock();
+        signalMutex->unlock();
     }
 
     // create a process with an optional name

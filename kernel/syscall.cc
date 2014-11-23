@@ -20,6 +20,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         Process::exit(a0);
         return -1;
     case 1: /* putchar */
+        //Debug::printf("disableCount=%d, iDepth=%d\n", Process::current->disableCount, Process::current->iDepth);
         Debug::printf("%c",a0);
         return 0;
     case 2: /* fork */
@@ -166,6 +167,17 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
             // restore disableCount (while we have C++)
             sigframe *frame = (sigframe*) a0;
+
+            //Debug::printf("restoring context in syscallHandler from frame=%X\n",frame);
+            //Debug::printf("%X\n", frame->esp);
+            //Debug::printf("%X\n", frame->flags);
+            //Debug::printf("%X\n", frame->eip);
+            //Debug::printf("%X\n", frame->ebp);
+            //Debug::printf("%X\n", frame->edi);
+            //Debug::printf("%X\n", frame->esi);
+            //Debug::printf("%X\n", frame->ebx);
+            //Debug::printf("%X\n", frame->disableCount);
+            //Debug::printf("%X\n", frame->iDepth);
 
             Process::current->disableCount = frame->disableCount;
             Process::current->iDepth = frame->iDepth;

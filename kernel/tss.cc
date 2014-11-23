@@ -24,3 +24,7 @@ void TSS::init(void) {
 void TSS::esp0(uint32_t v) {
     tss.esp0 = v;
 }
+
+void tss_esp0(uint32_t v) {
+    TSS::esp0(v);
+}

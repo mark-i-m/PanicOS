@@ -100,7 +100,7 @@ extern "C" void pic_irq(int irq, int userESP) {
     pic_eoi(irq); /* the PIC can deliver the next interrupt,
                      but interrupts are still disabled */
     Process::current->uesp = userESP;
-    //Process::trace("in pic_irq: going to yield; userESP=%X", userESP);
+    //Debug::printf("in pic_irq: going to yield; userESP=%X\n", userESP);
     Process::yield();
     Process::endIrq();
 }

@@ -70,7 +70,7 @@ void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
 // will run in kernel mode, with interrupts disabled
 void Signal::doSignal(){
-    Process::trace("doing signal %d", sig);
+    //Process::trace("doing signal %d", sig);
 
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
@@ -113,8 +113,11 @@ void Signal::setupFrame(){
     Process::current->disableCount = 0;
     Process::current->iDepth = 0;
 
-    // Pic::on();
-
     // switch to user mode
-    switchToSignal((uint32_t)Process::current->signalHandler, (uint32_t)frame);
+    // must save kesp, in case interrupted during handler
+    
+    // save the kernel esp, so that
+    // system calls and interrupts wont
+    // corrupt this function's stack
+    switchToSignal((uint32_t)Process::current->signalHandler, (uint32_t)frame, (uint32_t) &Process::current->kesp);
 }

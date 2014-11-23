@@ -104,6 +104,8 @@ Process::Process(const char* name, Table *resources_) :
     signalQueue = new SimpleQueue<Signal*>();
     signalMutex->unlock();
 
+    inSignal = false;
+
     uesp = 0;
 
     /* We always start with a refcount of 1 */
@@ -382,7 +384,7 @@ void Process::dispatch(Process *prev) {
 
     if (this != prev) {
         addressSpace.activate();
-        TSS::esp0((uint32_t) &stack[STACK_LONGS]);
+        TSS::esp0(inSignal ? kesp :((uint32_t) &stack[STACK_LONGS]));
         current = this;
         contextSwitch(
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
@@ -390,10 +392,15 @@ void Process::dispatch(Process *prev) {
     checkKilled();
 
     //Debug::printf("going to check signals\n");
-    signalMutex->lock();
-    Signal::checkSignals(signalQueue);
-    signalMutex->unlock();
+    if( !inSignal ){ // we do not want recursive signal handling
+        inSignal = true;
+        signalMutex->lock();
+        Signal::checkSignals(signalQueue);
+        signalMutex->unlock();
+        inSignal = false;
+    }
     //Debug::printf("checked signals\n");
+
 }
 
 void Process::yield(Queue<Process*> *q) {

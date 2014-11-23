@@ -412,13 +412,16 @@ pageFaultHandler:
         add $4,%esp   /* pop error */
         iret
 
-    # void switchToSignal(long signalHandler, long frame)
+    # void switchToSignal(long signalHandler, long frame, long kesp)
     .global switchToSignal
 switchToSignal:
-    mov 4(%esp), %eax   # signalHandler
-    mov 8(%esp), %ecx   # frame
+    push %ebp
+    mov %esp, %ebp
 
-    mov %esp, 12(%ecx)  # save regs
+    mov 8(%ebp), %eax   # signalHandler
+    mov 12(%ebp), %ecx   # frame
+
+                        # save regs
     mov %ebp, 24(%ecx)
     mov %edi, 28(%ecx)
     mov %esi, 32(%ecx)
@@ -431,10 +434,26 @@ switchToSignal:
     push %ecx
     push %eax
 
+    mov 16(%ebp), %edx    # save Process::current->kesp
+    mov %esp, (%edx)
+
+    mov %esp, 12(%ecx)    # save esp
+
+                          # save esp to tss
+    mov %esp, %eax
+    push %eax
+
+    .extern tss_esp0
+    call tss_esp0
+
+    add $4, %esp
+
     call switchToUser
 
 returnToKernel:
     add $12, %esp    # discard args
+
+    leave
     ret
 
     # void sys_sigret(long frame)
