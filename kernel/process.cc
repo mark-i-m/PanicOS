@@ -519,7 +519,7 @@ void Process::alarm(uint32_t second) {
         // add to tail, but do NOT block
         p->waiting.addTail(Process::current);
 
-    Debug::printf("Added timer to process %s for %d seconds\n", Process::current->name, second);
+    //Debug::printf("Added timer to process %s for %d seconds\n", Process::current->name, second);
     Process::enable();
 }
 
