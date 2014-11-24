@@ -60,10 +60,29 @@ jumpercode *Signal::putJumperCode(){
 
 // will run in kernel mode, with interrupts disabled
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
-    while(!signals->isEmpty()){
+
+    while(1){
+        bool isEmpty;
+
+        // this is the only place where items are removed
+        // from the queue, so we don't have to worry about
+        // race conditions between this lock and the next
+        Process::current->signalMutex->lock();
+        isEmpty = signals->isEmpty();
+        Process::current->signalMutex->unlock();
+
+        if(isEmpty) return;
+
         // wait for this process to enter user mode
         if((uint32_t)Process::current->uesp < 0x80000000) return;
-        signals->removeHead()->doSignal();
+
+        // remove the head of the list
+        Process::current->signalMutex->lock();
+        Signal *sig = signals->removeHead();
+        Process::current->signalMutex->unlock();
+
+        // handle the signal
+        sig->doSignal();
         Process::current->checkKilled(); // in case a signal killed it
     }
 }
@@ -115,7 +134,7 @@ void Signal::setupFrame(){
 
     // switch to user mode
     // must save kesp, in case interrupted during handler
-    
+
     // save the kernel esp, so that
     // system calls and interrupts wont
     // corrupt this function's stack

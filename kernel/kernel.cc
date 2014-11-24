@@ -32,8 +32,8 @@ void kernelMain(void) {
             enable interrupts
           - go away
     */
-       
-      
+
+
     Pic::off();             // make sure interrupts are disabled
 
     U8250 uart;

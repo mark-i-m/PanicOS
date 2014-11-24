@@ -28,7 +28,7 @@ int main(){
         down(s); // wait until the child has registered the signal handler
         signal(fk, 0);
         long ret = join(fk);
-        puts("child exited with code = ");
+        puts("child exited with code = 0x");
         puthex(ret);
         puts("\n");
         shutdown();

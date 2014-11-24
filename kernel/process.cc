@@ -394,9 +394,9 @@ void Process::dispatch(Process *prev) {
     //Debug::printf("going to check signals\n");
     if( !inSignal ){ // we do not want recursive signal handling
         inSignal = true;
-        signalMutex->lock();
+//        signalMutex->lock();
         Signal::checkSignals(signalQueue);
-        signalMutex->unlock();
+//        signalMutex->unlock();
         inSignal = false;
     }
     //Debug::printf("checked signals\n");
