@@ -10,6 +10,7 @@
 typedef void (*SignalHandler)(uint32_t);
 
 enum signal_t {
+    SIGTEST,
     SIGALRM
 };
 

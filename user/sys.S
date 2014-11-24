@@ -167,3 +167,12 @@ handler:
     mov $0, %edx
     int $100
     ret
+    
+    # long alarm(long seconds)
+    .global alarm
+alarm:
+    mov $17,%eax
+    mov 4(%esp), %ecx
+    mov $0, %edx
+    int $100
+    ret
