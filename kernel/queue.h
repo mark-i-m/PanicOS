@@ -6,6 +6,7 @@ public:
     virtual void addTail(T v) = 0;
     virtual T removeHead()= 0;
     virtual bool isEmpty() = 0;
+    virtual unsigned long size() = 0;
 };
 
 template<typename T> class SimpleQueue : public Queue<T> {
@@ -19,6 +20,7 @@ private:
 
     Node *first;
     Node *last;
+    unsigned long nodes; // node count (size of queue)
 public:
     SimpleQueue() : first(0), last(0) {}
     virtual ~SimpleQueue() {}
@@ -34,6 +36,7 @@ public:
         if (first == 0) {
             first = n;
         }
+        nodes++;
     }
     bool isEmpty() {
         return first == 0;
@@ -48,7 +51,11 @@ public:
         }
         T v = p->value;
         delete p;
+        nodes--;
         return v;
+    }
+    unsigned long size() {
+        return nodes;
     }
 
 };

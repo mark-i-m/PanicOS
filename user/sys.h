@@ -18,5 +18,6 @@ extern long join(long proc);
 extern long shutdown();
 extern long signal(long pd, long sig);
 extern long handler(void *sighandler);
+extern long alarm(long seconds);
 
 #endif

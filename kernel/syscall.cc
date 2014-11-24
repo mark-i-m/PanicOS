@@ -156,6 +156,11 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             Process::current->signalHandler = (SignalHandler*)a0;
             return 0;
         }
+    case 17: /* alarm */
+        {
+            Process::current->alarm(a0);
+            return 0;
+        }
     case 0xff: /* sys_sigret */
         {
             // make sure interrupts are disabled while we restore

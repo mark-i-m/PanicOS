@@ -12,16 +12,17 @@
 #include "libk.h"
 
 /* global process declarations */
-Debug* Process::DEBUG;                       // the debug channel
-size_t Process::STACK_LONGS = 1024 * 2;      // default kernel stack size
-SimpleQueue<Process*> *Process::readyQueue;  // the ready queue
-SimpleQueue<Process*> *Process::reaperQueue; // the reaper queue
-Process* Process::current;                   // the current process
-Atomic32 Process::nextId;                     // next process ID
+Debug* Process::DEBUG;                          // the debug channel
+size_t Process::STACK_LONGS = 1024 * 2;         // default kernel stack size
+SimpleQueue<Process*> *Process::readyQueue;     // the ready queue
+SimpleQueue<Process*> *Process::reaperQueue;    // the reaper queue
+Process* Process::current;                      // the current process
+Atomic32 Process::nextId;                       // next process ID
 Semaphore *Process::traceMutex;
-Timer* Process::timers = nullptr;            // pending timers
-Process* Process::idleProcess = nullptr;     // the idle process
-uint32_t Process::idleJiffies = 0;            // idle jiffies
+Timer* Process::timers = nullptr;               // pending timers
+Alarm *Process::alarms = nullptr;               // pending alarms
+Process* Process::idleProcess = nullptr;        // the idle process
+uint32_t Process::idleJiffies = 0;              // idle jiffies
 
 void Process::init() {
     DEBUG = new Debug("Process");
@@ -451,6 +452,12 @@ public:
     SimpleQueue<Process*> waiting;
 };
 
+class Alarm : public Timer {
+public:
+    uint32_t interval;
+    bool overdue;
+};
+
 void Process::sleepUntil(uint32_t second) {
     Process::disable();
 
@@ -485,6 +492,37 @@ void Process::sleepFor(uint32_t seconds) {
     sleepUntil(Pit::seconds() + seconds);
 }
 
+void Process::alarm(uint32_t second) {
+    Process::disable();
+
+        Alarm **pp = &alarms;
+        Alarm* p = alarms;
+        while (p) {
+            if (p->interval == second) {
+                break;
+            } else if (p->interval > second) {
+                p = nullptr;
+                break;
+            } else {
+                pp = (Alarm**) &p->next;
+                p = (Alarm*) p->next;
+            }
+        }
+        if (!p) {
+            p = new Alarm();
+            p->target = (second) * Pit::hz + Pit::jiffies;
+            p->next = *pp;
+            p->interval = second;
+            p->overdue = false;
+            *pp = p;
+        }
+        // add to tail, but do NOT block
+        p->waiting.addTail(Process::current);
+
+    Debug::printf("Added timer to process %s for %d seconds\n", Process::current->name, second);
+    Process::enable();
+}
+
 /* called for every timer tick */
 void Process::tick() {
     /* interrupts are already disabled but might as well */
@@ -502,6 +540,30 @@ void Process::tick() {
                 Process* p = first->waiting.removeHead();
                 p->makeReady();
             }
+        }
+    }
+
+    Alarm* firstTimer = alarms;
+    if(Process::current && !Process::current->inSignal) { // otherwise, we can deadlock
+        while (firstTimer) {
+            if (Pit::jiffies == firstTimer->target || firstTimer->overdue) {
+                for (uint32_t i = 0; i < firstTimer->waiting.size(); i++) {
+                    Process* p = firstTimer->waiting.removeHead();
+                    p->signal(SIGALRM);
+                    firstTimer->waiting.addTail(p);
+                }
+                // update the target
+                firstTimer->target += firstTimer->interval * Pit::hz;
+                firstTimer->overdue = false;
+            }
+            firstTimer = (Alarm*) firstTimer->next;
+        }
+    } else if (Process::current->inSignal) { // mark overdue timers that we had to skip to avoid deadlock
+        while (firstTimer) {
+            if (Pit::jiffies == firstTimer->target) {
+                firstTimer->overdue = true;
+            }
+            firstTimer = (Alarm*) firstTimer->next;
         }
     }
 

@@ -12,6 +12,7 @@
 #include "signal.h"
 
 class Timer;
+class Alarm;
 
 class Process : public Resource {
 
@@ -36,6 +37,9 @@ public:
 
     // pending timers
     static Timer* timers;
+
+    // pending alarms
+    static Alarm *alarms;
 
     // next process id
     static Atomic32 nextId;
@@ -151,6 +155,9 @@ public:
 
     // sleep for the given number of seconds
     static void sleepFor(uint32_t seconds);
+
+    // alarm every seconds seconds
+    static void alarm(uint32_t seconds);
 
     // called by pit for each tick
     static void tick();
