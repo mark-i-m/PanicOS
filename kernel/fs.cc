@@ -115,7 +115,7 @@ class Fat439Directory : public Directory {
 public:
     Fat439Directory(Fat439* fs, uint32_t start) : Directory(fs), start(start) {
         content = fs->openFile(start);
-        entries = content->getLength() / 16;        
+        entries = content->getLength() / 16;
     }
 
     uint32_t lookup(const char* name) {

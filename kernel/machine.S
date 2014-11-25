@@ -72,7 +72,6 @@ switchToUser:
         push %edx               # ring 3 CS
 
 	mov userDataSeg,%edx
-
 	push %ecx               # user EIP
 
 	movw %dx,%ds            # no more memory refs until iret

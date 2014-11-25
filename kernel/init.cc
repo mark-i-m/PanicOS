@@ -8,11 +8,10 @@ Init::Init() : Process("init",nullptr) {
 }
 
 long Init::run() {
-
     SimpleQueue<const char*> argv;
-    argv.addTail(K::strdup("test"));
+    argv.addTail(K::strdup("shell"));
 
-    execv("test",&argv,1);
+    execv("shell",&argv,1);
 
     Debug::shutdown("What?");
     return 0;

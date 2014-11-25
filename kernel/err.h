@@ -7,6 +7,5 @@
 #define ERR_NO_ID (-1003)
 #define ERR_NOT_POSSIBLE (-1004)
 #define ERR_PAGE_FAULT (-1005)
-#define ERR_NOT_EXECABLE (-1006)
 
 #endif
