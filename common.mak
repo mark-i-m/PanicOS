@@ -1,5 +1,7 @@
-CFLAGS = -std=c99 -m32 -ffreestanding -nostdlib -nodefaultlibs -g -O0 -Wall -Werror
-CCFLAGS = -std=c++0x -fno-exceptions -fno-rtti -m32 -ffreestanding -nostdlib -nodefaultlibs -g -O0 -Wall -Werror
+DEBUGFLAGS ?= -O3
+
+CFLAGS = -std=c99 -m32 -ffreestanding -nostdlib -nodefaultlibs -Wall -Werror $(DEBUGFLAGS)
+CCFLAGS = -std=c++0x -fno-exceptions -fno-rtti -m32 -ffreestanding -nostdlib -nodefaultlibs -Wall -Werror $(DEBUGFLAGS)
 
 CFILES = $(wildcard *.c)
 CCFILES = $(wildcard *.cc)
