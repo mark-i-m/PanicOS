@@ -1,6 +1,6 @@
 #include "libc.h"
 
-long numSignals = 0;
+volatile unsigned short numSignals = 0;
 
 void sigHandler(long sig) {
     switch(sig){
