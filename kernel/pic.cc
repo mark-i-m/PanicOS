@@ -101,7 +101,7 @@ extern "C" void pic_irq(int irq, regs *registers) {
                      but interrupts are still disabled */
 
     // save user context
-    *(Process::current->context->registers) = *registers;
+    //*(Process::current->context->registers) = *registers;
 
     Process::yield();
     Process::endIrq();

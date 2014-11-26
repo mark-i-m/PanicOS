@@ -147,13 +147,13 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
                  ResourceType::PROCESS);
             if (proc == nullptr) return ERR_INVALID_ID;
             //Process::trace("sending signal %d to pd=%d", a1, a0);
-            //proc->signal((signal_t)a1);
+            proc->signal((signal_t)a1);
             //Process::trace("done");
             return 0;
         }
     case 16: /* handler */
         {
-            //Process::current->signalHandler = (SignalHandler*)a0;
+            Process::current->signalHandler = (SignalHandler*)a0;
             return 0;
         }
     case 17: /* alarm */
