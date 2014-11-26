@@ -81,7 +81,7 @@ void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
 // will run in kernel mode, with interrupts disabled
 void Signal::doSignal(){
-    Process::trace("doing signal %d", sig);
+    //Process::trace("doing signal %d", sig);
 
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
@@ -110,7 +110,8 @@ void Signal::setupFrame(){
     sigframe *frame = getSignalFrame(jumper);
 
     // enable interupts during the handler
-    Process::endIrq();
+    Process::current->iDepth --;
+    Process::current->disableCount = 0;
 
     switchToUser((uint32_t)Process::current->signalHandler, (uint32_t)frame, 0);
 }
