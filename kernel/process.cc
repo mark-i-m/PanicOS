@@ -328,7 +328,19 @@ void Process::dispatch(Process *prev) {
         contextSwitch(
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
+
     checkKilled();
+
+    //Debug::printf("going to check signals\n");
+    if( !inSignal ){ // we do not want recursive signal handling
+        inSignal = true;
+//        signalMutex->lock();
+        Signal::checkSignals(signalQueue);
+//        signalMutex->unlock();
+        inSignal = false;
+    }
+    //Debug::printf("checked signals\n");
+
 }
 
 void Process::yield(Queue<Process*> *q) {
