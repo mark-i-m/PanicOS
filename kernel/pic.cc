@@ -88,7 +88,7 @@ void pic_eoi(int irq) {
     outb(C1,0x20);
 }
 
-extern "C" void pic_irq(int irq, int userESP) {
+extern "C" void pic_irq(int irq, regs *registers) {
     Process::startIrq();
     switch (irq) {
     case 0: Pit::handler(); break;
@@ -99,8 +99,10 @@ extern "C" void pic_irq(int irq, int userESP) {
     }
     pic_eoi(irq); /* the PIC can deliver the next interrupt,
                      but interrupts are still disabled */
-    Process::current->uesp = userESP;
-    //Debug::printf("in pic_irq: going to yield; userESP=%X\n", userESP);
+
+    // save user context
+    *(Process::current->context->registers) = *registers;
+
     Process::yield();
     Process::endIrq();
 }

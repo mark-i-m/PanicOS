@@ -48,8 +48,6 @@ extern "C" void irq13(void);
 extern "C" void irq14(void);
 extern "C" void irq15(void);
 
-extern "C" void sys_sigret(long);
-extern "C" void switchToSignal(long signalHandler, long frame, long kesp);
-extern "C" uint32_t getFlags();
+extern "C" void sys_sigret(uint32_t);
 
 #endif

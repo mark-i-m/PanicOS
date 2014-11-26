@@ -147,31 +147,23 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
                  ResourceType::PROCESS);
             if (proc == nullptr) return ERR_INVALID_ID;
             //Process::trace("sending signal %d to pd=%d", a1, a0);
-            proc->signal((signal_t)a1);
+            //proc->signal((signal_t)a1);
             //Process::trace("done");
             return 0;
         }
     case 16: /* handler */
         {
-            Process::current->signalHandler = (SignalHandler*)a0;
+            //Process::current->signalHandler = (SignalHandler*)a0;
             return 0;
         }
     case 17: /* alarm */
         {
-            Process::current->alarm(a0);
+            //Process::current->alarm(a0);
             return 0;
         }
     case 0xff: /* sys_sigret */
         {
-            // make sure interrupts are disabled while we restore
-            // the kernel state. The interrupt state will be restored
-            // in sys_sigret
-            Pic::off();
-
             //Process::trace("sys_sigret");
-
-            // restore disableCount (while we have C++)
-            sigframe *frame = (sigframe*) a0;
 
             //Debug::printf("restoring context in syscallHandler from frame=%X\n",frame);
             //Debug::printf("%X\n", frame->esp);
@@ -184,10 +176,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             //Debug::printf("%X\n", frame->disableCount);
             //Debug::printf("%X\n", frame->iDepth);
 
-            Process::current->disableCount = frame->disableCount;
-            Process::current->iDepth = frame->iDepth;
-
-            sys_sigret(a0);
+            sys_sigret((uint32_t)Process::current->context);
 
             Debug::shutdown("What?");
             return -1;

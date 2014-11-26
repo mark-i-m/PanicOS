@@ -20,7 +20,6 @@ Process* Process::current;                      // the current process
 Atomic32 Process::nextId;                       // next process ID
 Semaphore *Process::traceMutex;
 Timer* Process::timers = nullptr;               // pending timers
-Alarm *Process::alarms = nullptr;               // pending alarms
 Process* Process::idleProcess = nullptr;        // the idle process
 uint32_t Process::idleJiffies = 0;              // idle jiffies
 
@@ -99,23 +98,24 @@ Process::Process(const char* name, Table *resources_) :
     }
     Resource::ref(resources);
 
-    signalMutex = new Mutex();
+    //signalMutex = new Mutex();
 
-    signalMutex->lock();
-    signalQueue = new SimpleQueue<Signal*>();
-    signalMutex->unlock();
+    //signalMutex->lock();
+    //signalQueue = new SimpleQueue<Signal *>();
+    //context = new sigcontext();
+    //signalMutex->unlock();
 
-    inSignal = false;
-
-    uesp = 0;
+    //inSignal = false;
 
     /* We always start with a refcount of 1 */
     count.set(1);
 }
 
 Process::~Process() {
-    delete signalMutex;
-    delete signalQueue;
+    //delete context;
+    //delete signalQueue;
+    //delete signalMutex;
+
     if (stack) {
         delete[] (stack - FUDGE);
         stack = 0;
@@ -131,7 +131,6 @@ void Process::start() {
 }
 
 void Process::kill(long code) {
-    //trace("killed with code %d", code);
 
     Process::disable();
     if (!isKilled) {
@@ -307,14 +306,6 @@ void Process::exit(long exitCode) {
     }
 }
 
-signal_action_t Process::getSignalAction(signal_t sig) {
-    return EXIT;
-}
-
-void Process::setSignalAction(signal_t sig, signal_action_t act) {
-    Debug::printf("setting signal action");
-}
-
 /* switch to the next process */
 void Process::dispatch(Process *prev) {
     state = RUNNING;
@@ -331,23 +322,12 @@ void Process::dispatch(Process *prev) {
 
     if (this != prev) {
         addressSpace.activate();
-        TSS::esp0(inSignal ? kesp :((uint32_t) &stack[STACK_LONGS]));
+        TSS::esp0((uint32_t) &stack[STACK_LONGS]);
         current = this;
         contextSwitch(
             prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
     checkKilled();
-
-    //Debug::printf("going to check signals\n");
-    if( !inSignal ){ // we do not want recursive signal handling
-        inSignal = true;
-//        signalMutex->lock();
-        Signal::checkSignals(signalQueue);
-//        signalMutex->unlock();
-        inSignal = false;
-    }
-    //Debug::printf("checked signals\n");
-
 }
 
 void Process::yield(Queue<Process*> *q) {
@@ -387,6 +367,14 @@ void Process::yield() {
     yield(nullptr);
 }
 
+//signal_action_t Process::getSignalAction(signal_t){
+//    return EXIT;
+//}
+//
+//void Process::setSignalAction(signal_t, signal_action_t){
+//    trace("set signal action");
+//}
+
 /*******************/
 /* The timer class */
 /*******************/
@@ -396,12 +384,6 @@ public:
     uint32_t target;
     Timer *next;
     SimpleQueue<Process*> waiting;
-};
-
-class Alarm : public Timer {
-public:
-    uint32_t interval;
-    bool overdue;
 };
 
 void Process::sleepUntil(uint32_t second) {
@@ -438,37 +420,6 @@ void Process::sleepFor(uint32_t seconds) {
     sleepUntil(Pit::seconds() + seconds);
 }
 
-void Process::alarm(uint32_t second) {
-    Process::disable();
-
-        Alarm **pp = &alarms;
-        Alarm* p = alarms;
-        while (p) {
-            if (p->interval == second) {
-                break;
-            } else if (p->interval > second) {
-                p = nullptr;
-                break;
-            } else {
-                pp = (Alarm**) &p->next;
-                p = (Alarm*) p->next;
-            }
-        }
-        if (!p) {
-            p = new Alarm();
-            p->target = (second) * Pit::hz + Pit::jiffies;
-            p->next = *pp;
-            p->interval = second;
-            p->overdue = false;
-            *pp = p;
-        }
-        // add to tail, but do NOT block
-        p->waiting.addTail(Process::current);
-
-    //Debug::printf("Added timer to process %s for %d seconds\n", Process::current->name, second);
-    Process::enable();
-}
-
 /* called for every timer tick */
 void Process::tick() {
     /* interrupts are already disabled but might as well */
@@ -486,30 +437,6 @@ void Process::tick() {
                 Process* p = first->waiting.removeHead();
                 p->makeReady();
             }
-        }
-    }
-
-    Alarm* firstTimer = alarms;
-    if(Process::current && !Process::current->inSignal) { // otherwise, we can deadlock
-        while (firstTimer) {
-            if (Pit::jiffies == firstTimer->target || firstTimer->overdue) {
-                for (uint32_t i = 0; i < firstTimer->waiting.size(); i++) {
-                    Process* p = firstTimer->waiting.removeHead();
-                    p->signal(SIGALRM);
-                    firstTimer->waiting.addTail(p);
-                }
-                // update the target
-                firstTimer->target += firstTimer->interval * Pit::hz;
-                firstTimer->overdue = false;
-            }
-            firstTimer = (Alarm*) firstTimer->next;
-        }
-    } else if (Process::current->inSignal) { // mark overdue timers that we had to skip to avoid deadlock
-        while (firstTimer) {
-            if (Pit::jiffies == firstTimer->target) {
-                firstTimer->overdue = true;
-            }
-            firstTimer = (Alarm*) firstTimer->next;
         }
     }
 

@@ -9,6 +9,4 @@ public:
     static void esp0(uint32_t v);
 };
 
-extern "C" void tss_esp0(uint32_t v); 
-
 #endif

@@ -72,6 +72,7 @@ switchToUser:
         push %edx               # ring 3 CS
 
 	mov userDataSeg,%edx
+
 	push %ecx               # user EIP
 
 	movw %dx,%ds            # no more memory refs until iret
@@ -319,9 +320,8 @@ irq_common:
 	push %edi
 	push %ebp
 
-    # mov the user esp to
-    # edx to save it in pic_irq
-    mov 40(%esp), %edx
+    # edx points to the saved user context
+    mov %esp, %edx
 
 	push %ds
 	mov kernelDataSeg,%ecx
@@ -411,50 +411,6 @@ pageFaultHandler:
         add $4,%esp   /* pop error */
         iret
 
-    # void switchToSignal(long signalHandler, long frame, long kesp)
-    .global switchToSignal
-switchToSignal:
-    push %ebp
-    mov %esp, %ebp
-
-    mov 8(%ebp), %eax   # signalHandler
-    mov 12(%ebp), %ecx   # frame
-
-                        # save regs
-    mov %ebp, 24(%ecx)
-    mov %edi, 28(%ecx)
-    mov %esi, 32(%ecx)
-    mov %ebx, 36(%ecx)
-
-    movl $returnToKernel, 20(%ecx) # save return adr to kernel
-
-    mov $0, %edx    # push args
-    push %edx
-    push %ecx
-    push %eax
-
-    mov 16(%ebp), %edx    # save Process::current->kesp
-    mov %esp, (%edx)
-
-    mov %esp, 12(%ecx)    # save esp
-
-                          # save esp to tss
-    mov %esp, %eax
-    push %eax
-
-    .extern tss_esp0
-    call tss_esp0
-
-    add $4, %esp
-
-    call switchToUser
-
-returnToKernel:
-    add $12, %esp    # discard args
-
-    leave
-    ret
-
     # void sys_sigret(long frame)
     .global sys_sigret
 sys_sigret:
@@ -485,13 +441,6 @@ sys_sigret:
 	# 36  ebx;
     # 40  disableCount;
     # 44  iDepth;
-
-    # uint32_t getFlags()
-    .global getFlags
-getFlags:
-    pushf
-    pop %eax
-    ret
 
 	/* memset(void* p, int val, size_t sz) */
 	.global memset

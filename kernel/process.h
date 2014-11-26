@@ -67,8 +67,8 @@ public:
     // A place for context switching to save the kernel ESP
     long kesp;
 
-    // A place for interrupts to save the user ESP
-    long uesp;
+    // Saves the user-space context
+    sigcontext *context;
 
     // set to true if the process is killed
     bool isKilled;
@@ -107,20 +107,20 @@ public:
     Table *resources;
 
     // Signals
-    SignalHandler *signalHandler; // signal handler
-    SimpleQueue<Signal*> *signalQueue; // pending signals
-    Mutex *signalMutex; // protects the signal queue
-    bool inSignal;
+    //SignalHandler *signalHandler; // signal handler
+    //SimpleQueue<Signal*> *signalQueue; // pending signals
+    //Mutex *signalMutex; // protects the signal queue
+    //bool inSignal;
 
-    // get and set this process's action for the signal
-    virtual signal_action_t getSignalAction(signal_t);
-    virtual void setSignalAction(signal_t, signal_action_t);
+    //// get and set this process's action for the signal
+    //virtual signal_action_t getSignalAction(signal_t);
+    //virtual void setSignalAction(signal_t, signal_action_t);
 
-    virtual void signal(signal_t sig) {
-        signalMutex->lock();
-        signalQueue->addTail(new Signal(sig));
-        signalMutex->unlock();
-    }
+    //virtual void signal(signal_t sig) {
+    //    signalMutex->lock();
+    //    signalQueue->addTail(new Signal(sig));
+    //    signalMutex->unlock();
+    //}
 
     // create a process with an optional name
     // the new process inserts itself in the ready queue
@@ -157,7 +157,7 @@ public:
     static void sleepFor(uint32_t seconds);
 
     // alarm every seconds seconds
-    static void alarm(uint32_t seconds);
+    //static void alarm(uint32_t seconds);
 
     // called by pit for each tick
     static void tick();
