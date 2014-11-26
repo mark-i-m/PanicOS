@@ -321,6 +321,9 @@ irq_common:
 	push %ebp
 
 	push %ds
+
+    mov %esp, %edx
+
 	mov kernelDataSeg,%ecx
 	mov %cx,%ds
 
@@ -328,7 +331,6 @@ irq_common:
 	push %ebp
 
     # edx points to the saved user context
-    mov %esp, %edx
     push %edx
 	push %eax
 

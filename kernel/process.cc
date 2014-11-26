@@ -339,7 +339,7 @@ void Process::dispatch(Process *prev) {
 //        signalMutex->unlock();
         inSignal = false;
     }
-    //Debug::printf("checked signals\n");
+//    Debug::printf("checked signals\n");
 
 }
 

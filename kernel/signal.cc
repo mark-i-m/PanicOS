@@ -19,8 +19,7 @@ public:
         movleax(0xB8),
         sigret(0xFF),
         interrupt(0xCD),
-        syscall(0x64)
-        {}
+        syscall(0x64) {}
 };
 
 // used from linux kernel
@@ -54,6 +53,7 @@ jumpercode *Signal::putJumperCode(){
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
     // wait for this process to enter user mode
+    //Debug::printf("uesp=%X\n",Process::current->context->registers->esp);
     if((uint32_t)Process::current->context->registers->esp < 0x80000000) return;
 
     while(1){
@@ -81,7 +81,7 @@ void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
 // will run in kernel mode, with interrupts disabled
 void Signal::doSignal(){
-    //Process::trace("doing signal %d", sig);
+    Process::trace("doing signal %d", sig);
 
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
