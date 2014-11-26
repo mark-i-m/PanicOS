@@ -21,14 +21,10 @@ enum signal_action_t {
 
 struct jumpercode;
 
-typedef struct regs {
-	uint32_t ss;
-	uint32_t esp;
-	uint32_t flags;
-	uint32_t cs;
-	uint32_t eip;
+struct __attribute__((packed)) regs {
+public:
     uint32_t cr2;
-	uint32_t ds;
+	uint16_t ds;
 	uint32_t ebp;
 	uint32_t edi;
 	uint32_t esi;
@@ -36,18 +32,36 @@ typedef struct regs {
 	uint32_t ecx;
 	uint32_t ebx;
 	uint32_t eax;
-} regs;
+	uint32_t eip;
+	uint16_t cs;
+	uint32_t flags;
+	uint32_t esp;
+	uint16_t ss;
 
-typedef struct sigframe {
+    regs() {}
+};
+
+struct sigframe {
+public:
     jumpercode *returnadr;
     uint32_t signal;
-} sigframe;
 
-typedef struct sigcontext {
+    sigframe() {}
+};
+
+struct sigcontext {
+public:
     regs *registers;
     //uint32_t disableCount; //do we need these?
     //uint32_t iDepth;
-} sigcontext;
+
+    sigcontext(){
+        registers = new regs();
+    }
+    ~sigcontext(){
+        delete registers;
+    }
+};
 
 class Signal{
     private:

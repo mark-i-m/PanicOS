@@ -8,18 +8,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // assembly jumper function that calls sys_sigret
-typedef struct __attribute__((packed)) jumpercode {
+struct __attribute__((packed)) jumpercode {
+public:
     uint8_t movleax;
     uint32_t sigret; // sigret syscall #
     uint8_t interrupt; // int $0x64
     uint32_t syscall; // interupt #
-} jumpercode;
 
-static const jumpercode jumpertemplate = {
-    0xB8,
-    0xFF,
-    0xCD,
-    0x64
+    jumpercode() :
+        movleax(0xB8),
+        sigret(0xFF),
+        interrupt(0xCD),
+        syscall(0x64)
+        {}
 };
 
 // used from linux kernel
@@ -37,14 +38,14 @@ sigframe *Signal::getSignalFrame(jumpercode *jumper){
 }
 
 jumpercode *Signal::putJumperCode(){
-    jumpercode *jumper = 0;
+    jumpercode *jumper;
     Process *me = Process::current;
 
     // get address on stack
     // put it after the sigframe (arbitrary choice)
     jumper = (jumpercode*)STACK_ALIGN(me->context->registers->esp
                        - sizeof(sigframe) - sizeof(jumpercode));
-    *jumper = jumpertemplate;
+    *jumper = jumpercode();
 
     return jumper;
 }
@@ -53,7 +54,7 @@ jumpercode *Signal::putJumperCode(){
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
     // wait for this process to enter user mode
-    //if((uint32_t)Process::current->context->registers->esp < 0x80000000) return;
+    if((uint32_t)Process::current->context->registers->esp < 0x80000000) return;
 
     while(1){
         bool isEmpty;

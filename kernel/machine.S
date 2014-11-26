@@ -320,9 +320,6 @@ irq_common:
 	push %edi
 	push %ebp
 
-    # edx points to the saved user context
-    mov %esp, %edx
-
 	push %ds
 	mov kernelDataSeg,%ecx
 	mov %cx,%ds
@@ -330,6 +327,8 @@ irq_common:
 	mov %cr2,%ebp
 	push %ebp
 
+    # edx points to the saved user context
+    mov %esp, %edx
     push %edx
 	push %eax
 

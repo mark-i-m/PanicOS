@@ -29,8 +29,9 @@ int main(){
     if(fk == 0){
         handler((void*)&sigHandler);
         up(s);
-        int i;
-        for(i = 0; i < 10000000; i++) {}
+        //int i;
+        //for(i = 0; i < 10000000; i++) {}
+        while(1);
         exit(0xCAFE);
     } else {
         down(s); // wait until the child has registered the signal handler
@@ -41,20 +42,20 @@ int main(){
         puts("\n");
     }
 
-    puts("counting down to shutdown\n");
+    //puts("counting down to shutdown\n");
 
-    fk = fork();
-    if(fk == 0) {
-        handler((void*)&sigHandler);
-        alarm(1);
-        while(numSignals < 10);
-        exit(0xCAFE);
-    } else {
-        long ret = join(fk);
-        puts("child exited with code = 0x");
-        puthex(ret);
-        puts("\n");
-        shutdown();
-    }
+    //fk = fork();
+    //if(fk == 0) {
+    //    handler((void*)&sigHandler);
+    //    alarm(1);
+    //    while(numSignals < 10);
+    //    exit(0xCAFE);
+    //} else {
+    //    long ret = join(fk);
+    //    puts("child exited with code = 0x");
+    //    puthex(ret);
+    //    puts("\n");
+    //    shutdown();
+    //}
     return 0;
 }
