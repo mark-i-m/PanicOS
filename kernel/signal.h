@@ -45,7 +45,8 @@ public:
 struct sigframe {
 public:
     jumpercode *returnadr;
-    uint32_t signal;
+    regs *context;
+    regs registers;
 
     sigframe() {}
 };
@@ -53,6 +54,7 @@ public:
 struct sigcontext {
 public:
     regs *registers;
+    sigframe *frame;
 
     sigcontext(){
         registers = new regs();

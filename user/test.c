@@ -3,10 +3,18 @@
 volatile unsigned short numSignals = 0;
 volatile unsigned char isSignaled = 0;
 
-void sigtestHandler(long context) {
+int main();
+void contextTest();
+
+void sigtestHandler(regs *context) {
     puts("YAYAYAY!!\n");
+    context->eip = (unsigned long)&contextTest;
     isSignaled = 1;
     return;
+}
+
+void contextTest(){
+    exit(0xCAFE);
 }
 
 void alarmHandler(long context) {
@@ -26,7 +34,7 @@ int main(){
         signal(SIGTEST, (void*)&sigtestHandler);
         up(s);
         while(!isSignaled);
-        exit(0xCAFE);
+        exit(0xBEEF);
     } else {
         down(s); // wait until the child has registered the signal handler
         kill(fk, 0);

@@ -26,12 +26,14 @@ public:
 #define STACK_ALIGN(esp) ((esp) >> 4 << 4)
 
 sigframe *Signal::getSignalFrame(jumpercode *jumper){
-    sigframe *frame = 0;
+    sigframe *frame;
     Process *me = Process::current;
 
     frame = (sigframe*)STACK_ALIGN(me->context->registers->esp - sizeof(sigframe));
     frame->returnadr = jumper;
-    frame->signal = sig;
+    frame->context = &frame->registers;
+    frame->registers = *me->context->registers;
+    me->context->frame = frame;
 
     return frame;
 }

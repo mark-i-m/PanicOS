@@ -19,5 +19,6 @@ extern long shutdown();
 extern long kill(long pd, long sig);
 extern long signal(long sig, void *sighandler);
 extern long alarm(long seconds);
+extern long sigreturn();
 
 #endif

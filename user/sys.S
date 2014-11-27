@@ -176,3 +176,12 @@ alarm:
     mov $0, %edx
     int $100
     ret
+
+    # long sysreturn();
+    .global sysreturn
+sysreturn:
+    mov $0xFF, %eax
+    mov $0, %ecx
+    mov $0, %edx
+    int $100
+    ret
