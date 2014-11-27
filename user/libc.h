@@ -2,6 +2,7 @@
 #define _LIBC_H_
 
 #include "sys.h"
+#include "signal.h"
 
 extern void puts(char *p);
 extern char* gets();

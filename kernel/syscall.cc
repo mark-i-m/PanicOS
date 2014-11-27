@@ -140,7 +140,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         {
               return U8250::it->get();
         }
-    case 15: /* signal */
+    case 15: /* kill */
         {
             //Process::trace("made it to syscallHandler");
             Process *proc = (Process*) Process::current->resources->get(a0,
@@ -151,9 +151,10 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             //Process::trace("done");
             return 0;
         }
-    case 16: /* handler */
+    case 16: /* signal */
         {
-            Process::current->signalHandler = (SignalHandler*)a0;
+            //Process::trace("signal handler for signal %d is %X", a0, a1);
+            Process::current->signalHandlers[a0] = (SignalHandler*)a1;
             return 0;
         }
     case 17: /* alarm */

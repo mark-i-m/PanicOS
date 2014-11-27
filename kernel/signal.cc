@@ -91,7 +91,7 @@ void Signal::doSignal(){
             return;
         case EXIT:
             // if there is a signal handler
-            if (Process::current->signalHandler) {
+            if (Process::current->signalHandlers[sig]) {
                 setupFrame();
             } else {
                 // kill the process with the signal code
@@ -113,5 +113,5 @@ void Signal::setupFrame(){
     Process::current->iDepth --;
     Process::current->disableCount = 0;
 
-    switchToUser((uint32_t)Process::current->signalHandler, (uint32_t)frame, 0);
+    switchToUser((uint32_t)Process::current->signalHandlers[sig], (uint32_t)frame, 0);
 }

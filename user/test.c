@@ -3,24 +3,18 @@
 volatile unsigned short numSignals = 0;
 volatile unsigned char isSignaled = 0;
 
-void sigHandler(long sig) {
-    switch(sig){
-        case 0:
-            puts("YAYAYAY!!\n");
-            isSignaled = 1;
-            return;
-        case 1:
-            numSignals++;
-            puts("shutdown in T-");
-            putdec(10 - numSignals);
-            puts(" seconds!\n");
-            return;
-        default:
-            puts("Unknown signal: ");
-            putdec(sig);
-            puts("\n");
-            return;
-    }
+void sigtestHandler(long context) {
+    puts("YAYAYAY!!\n");
+    isSignaled = 1;
+    return;
+}
+
+void alarmHandler(long context) {
+    numSignals++;
+    puts("shutdown in T-");
+    putdec(10 - numSignals);
+    puts(" seconds!\n");
+    return;
 };
 
 int main(){
@@ -29,13 +23,13 @@ int main(){
     long s = semaphore(0);
     long fk = fork();
     if(fk == 0){
-        handler((void*)&sigHandler);
+        signal(SIGTEST, (void*)&sigtestHandler);
         up(s);
         while(!isSignaled);
         exit(0xCAFE);
     } else {
         down(s); // wait until the child has registered the signal handler
-        signal(fk, 0);
+        kill(fk, 0);
         long ret = join(fk);
         puts("child exited with code = 0x");
         puthex(ret);
@@ -46,7 +40,7 @@ int main(){
 
     fk = fork();
     if(fk == 0) {
-        handler((void*)&sigHandler);
+        signal(SIGALRM, (void*)&alarmHandler);
         alarm(1);
         while(numSignals < 10);
         exit(0xCAFE);

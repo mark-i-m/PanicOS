@@ -7,17 +7,18 @@
 #include "semaphore.h"
 #include "stdint.h"
 
-typedef void (*SignalHandler)(uint32_t);
-
 enum signal_t {
     SIGTEST,
-    SIGALRM
+    SIGALRM,
+    SIGNUM // ALWAYS the last one, represents the number of signals
 };
 
 enum signal_action_t {
     IGNORE, // will not trigger the sig handler
     EXIT // can be handled
 };
+
+typedef void (*SignalHandler)(uint32_t);
 
 struct jumpercode;
 
@@ -52,8 +53,6 @@ public:
 struct sigcontext {
 public:
     regs *registers;
-    //uint32_t disableCount; //do we need these?
-    //uint32_t iDepth;
 
     sigcontext(){
         registers = new regs();
@@ -64,14 +63,14 @@ public:
 };
 
 class Signal{
-    private:
+private:
     signal_t sig;
 
     void setupFrame();
     sigframe *getSignalFrame(jumpercode*);
     jumpercode *putJumperCode();
 
-    public:
+public:
     Signal(signal_t sig) : sig(sig) {}
 
     /* Handle all signals in this process signal queue */

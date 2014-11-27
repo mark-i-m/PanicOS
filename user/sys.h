@@ -16,8 +16,8 @@ extern long down(long sem);
 extern long fork();
 extern long join(long proc);
 extern long shutdown();
-extern long signal(long pd, long sig);
-extern long handler(void *sighandler);
+extern long kill(long pd, long sig);
+extern long signal(long sig, void *sighandler);
 extern long alarm(long seconds);
 
 #endif

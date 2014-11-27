@@ -150,24 +150,24 @@ getchar:
 	int $100
 	ret
 
-    # long signal(long pd, long sig)
-	.global signal
-signal:
+    # long kill(long pd, long sig)
+	.global kill
+kill:
 	mov $15,%eax
 	mov 4(%esp),%ecx
 	mov 8(%esp),%edx
 	int $100
 	ret
 
-    # long handler(void *sighandler)
-    .global handler
-handler:
+    # long signal(long sig, void *sighandler)
+    .global signal
+signal:
     mov $16,%eax
-    mov 4(%esp),%ecx
-    mov $0, %edx
+    mov 4(%esp), %ecx
+    mov 8(%esp), %edx
     int $100
     ret
-    
+
     # long alarm(long seconds)
     .global alarm
 alarm:

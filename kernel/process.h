@@ -107,7 +107,7 @@ public:
     Table *resources;
 
     // Signals
-    SignalHandler *signalHandler; // signal handler
+    SignalHandler *signalHandlers[SIGNUM]; // signal handler
     SimpleQueue<Signal*> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
     bool inSignal;
@@ -116,6 +116,7 @@ public:
     virtual signal_action_t getSignalAction(signal_t);
     virtual void setSignalAction(signal_t, signal_action_t);
 
+    // signal this process
     virtual void signal(signal_t sig) {
         signalMutex->lock();
         signalQueue->addTail(new Signal(sig));
