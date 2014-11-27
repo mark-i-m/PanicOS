@@ -490,29 +490,29 @@ void Process::tick() {
         }
     }
 
-    //Alarm* firstTimer = alarms;
-    //if(Process::current && !Process::current->inSignal) { // otherwise, we can deadlock
-    //    while (firstTimer) {
-    //        if (Pit::jiffies == firstTimer->target || firstTimer->overdue) {
-    //            for (uint32_t i = 0; i < firstTimer->waiting.size(); i++) {
-    //                Process* p = firstTimer->waiting.removeHead();
-    //                p->signal(SIGALRM);
-    //                firstTimer->waiting.addTail(p);
-    //            }
-    //            // update the target
-    //            firstTimer->target += firstTimer->interval * Pit::hz;
-    //            firstTimer->overdue = false;
-    //        }
-    //        firstTimer = (Alarm*) firstTimer->next;
-    //    }
-    //} else if (Process::current->inSignal) { // mark overdue timers that we had to skip to avoid deadlock
-    //    while (firstTimer) {
-    //        if (Pit::jiffies == firstTimer->target) {
-    //            firstTimer->overdue = true;
-    //        }
-    //        firstTimer = (Alarm*) firstTimer->next;
-    //    }
-    //}
+    Alarm* firstTimer = alarms;
+    if(Process::current && !Process::current->inSignal) { // otherwise, we can deadlock
+        while (firstTimer) {
+            if (Pit::jiffies == firstTimer->target || firstTimer->overdue) {
+                for (uint32_t i = 0; i < firstTimer->waiting.size(); i++) {
+                    Process* p = firstTimer->waiting.removeHead();
+                    p->signal(SIGALRM);
+                    firstTimer->waiting.addTail(p);
+                }
+                // update the target
+                firstTimer->target += firstTimer->interval * Pit::hz;
+                firstTimer->overdue = false;
+            }
+            firstTimer = (Alarm*) firstTimer->next;
+        }
+    } else if (Process::current->inSignal) { // mark overdue timers that we had to skip to avoid deadlock
+        while (firstTimer) {
+            if (Pit::jiffies == firstTimer->target) {
+                firstTimer->overdue = true;
+            }
+            firstTimer = (Alarm*) firstTimer->next;
+        }
+    }
 
     Process::enable();
 }

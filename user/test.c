@@ -42,20 +42,20 @@ int main(){
         puts("\n");
     }
 
-    //puts("counting down to shutdown\n");
+    puts("counting down to shutdown\n");
 
-    //fk = fork();
-    //if(fk == 0) {
-    //    handler((void*)&sigHandler);
-    //    alarm(1);
-    //    while(numSignals < 10);
-    //    exit(0xCAFE);
-    //} else {
-    //    long ret = join(fk);
-    //    puts("child exited with code = 0x");
-    //    puthex(ret);
-    //    puts("\n");
-    //    shutdown();
-    //}
+    fk = fork();
+    if(fk == 0) {
+        handler((void*)&sigHandler);
+        alarm(1);
+        while(numSignals < 10);
+        exit(0xCAFE);
+    } else {
+        long ret = join(fk);
+        puts("child exited with code = 0x");
+        puthex(ret);
+        puts("\n");
+        shutdown();
+    }
     return 0;
 }

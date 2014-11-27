@@ -158,27 +158,16 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 17: /* alarm */
         {
-            //Process::current->alarm(a0);
+            Process::current->alarm(a0);
             return 0;
         }
     case 0xff: /* sys_sigret */
         {
-            //Process::trace("sys_sigret");
-
-            //Debug::printf("restoring context in syscallHandler from frame=%X\n",frame);
-            //Debug::printf("%X\n", frame->esp);
-            //Debug::printf("%X\n", frame->flags);
-            //Debug::printf("%X\n", frame->eip);
-            //Debug::printf("%X\n", frame->ebp);
-            //Debug::printf("%X\n", frame->edi);
-            //Debug::printf("%X\n", frame->esi);
-            //Debug::printf("%X\n", frame->ebx);
-            //Debug::printf("%X\n", frame->disableCount);
-            //Debug::printf("%X\n", frame->iDepth);
-
+            // interrupts are disabled
+            Process::current->inSignal = false;
             sys_sigret((uint32_t)Process::current->context->registers);
 
-            Debug::shutdown("What?");
+            Debug::panic("What?");
             return -1;
         }
     default:
