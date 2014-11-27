@@ -23,7 +23,7 @@ public:
 };
 
 // used from linux kernel
-#define STACK_ALIGN(esp) ((((esp) + 4) & -16ul) - 4)
+#define STACK_ALIGN(esp) ((esp) >> 4 << 4)
 
 sigframe *Signal::getSignalFrame(jumpercode *jumper){
     sigframe *frame = 0;

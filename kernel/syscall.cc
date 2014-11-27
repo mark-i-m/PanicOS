@@ -176,7 +176,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             //Debug::printf("%X\n", frame->disableCount);
             //Debug::printf("%X\n", frame->iDepth);
 
-            sys_sigret((uint32_t)Process::current->context);
+            sys_sigret((uint32_t)Process::current->context->registers);
 
             Debug::shutdown("What?");
             return -1;

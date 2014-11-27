@@ -322,13 +322,13 @@ irq_common:
 
 	push %ds
 
-    mov %esp, %edx
-
 	mov kernelDataSeg,%ecx
 	mov %cx,%ds
 
 	mov %cr2,%ebp
 	push %ebp
+
+    mov %esp, %edx
 
     # edx points to the saved user context
     push %edx
@@ -412,36 +412,40 @@ pageFaultHandler:
         add $4,%esp   /* pop error */
         iret
 
-    # void sys_sigret(long frame)
+    # void sys_sigret(sigcontext context)
     .global sys_sigret
 sys_sigret:
     mov 4(%esp), %eax   # load the frame pointer
+    mov %eax, %esp
 
-    mov 36(%eax), %ebx  # restore callee saved regs
-    mov 32(%eax), %esi
-    mov 28(%eax), %edi
-    mov 24(%eax), %ebp
-    mov 12(%eax), %esp
+	pop %ebp
+	mov %ebp,%cr2
 
-    mov 16(%eax), %ecx  # restore flags
-    push %ecx
-    popf
+	pop %ds
 
-    mov 20(%eax), %edx
-    jmpl *%edx            # restore pc
+	pop %ebp
+	pop %edi
+	pop %esi
+	pop %edx
+	pop %ecx
+	pop %ebx
+	pop %eax
+	iret
 
-    # 0   returnadr <= frame
-    # 4   signal
-    # 8   padding;
-	# 12  esp;
-	# 16  flags;
-	# 20  eip;
-	# 24  ebp;
-	# 28  edi;
-	# 32  esi;
-	# 36  ebx;
-    # 40  disableCount;
-    # 44  iDepth;
+    #    cr2 <= context
+	#    ds;
+	#    ebp;
+	#    edi;
+	#    esi;
+	#    edx;
+	#    ecx;
+	#    ebx;
+	#    eax;
+	#    eip;
+	#    cs;
+	#    flags;
+	#    esp;
+	#    ss;
 
 	/* memset(void* p, int val, size_t sz) */
 	.global memset

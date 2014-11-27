@@ -1,11 +1,13 @@
 #include "libc.h"
 
 volatile unsigned short numSignals = 0;
+volatile unsigned char isSignaled = 0;
 
 void sigHandler(long sig) {
     switch(sig){
         case 0:
             puts("YAYAYAY!!\n");
+            isSignaled = 1;
             return;
         case 1:
             numSignals++;
@@ -29,9 +31,7 @@ int main(){
     if(fk == 0){
         handler((void*)&sigHandler);
         up(s);
-        //int i;
-        //for(i = 0; i < 10000000; i++) {}
-        while(1);
+        while(!isSignaled);
         exit(0xCAFE);
     } else {
         down(s); // wait until the child has registered the signal handler

@@ -23,6 +23,7 @@ struct jumpercode;
 
 struct __attribute__((packed)) regs {
 public:
+    uint32_t cr2;
 	uint32_t ds;
 	uint32_t ebp;
 	uint32_t edi;
