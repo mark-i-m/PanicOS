@@ -126,7 +126,7 @@ public:
     virtual long setSignalAction(signal_t, signal_action_t);
 
     // signal this process
-    virtual void signal(signal_t sig) {
+    void signal(signal_t sig) {
         signalMutex->lock();
         signalQueue->addTail(new Signal(sig));
         signalMutex->unlock();

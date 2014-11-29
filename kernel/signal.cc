@@ -70,6 +70,7 @@ void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
         if(isEmpty) return;
 
+//    Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
         // remove the head of the list
 //        Process::current->signalMutex->lock();
         Signal *sig = signals->removeHead();
@@ -83,19 +84,24 @@ void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
 // will run in kernel mode, with interrupts disabled
 void Signal::doSignal(){
-    //Process::trace("doing signal %d", sig);
-
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
 
     switch(action) {
         case IGNORE:
+ //           Process::trace("ignore");
             return;
         case EXIT:
+   //         Process::trace("kill");
             // kill the process with the signal code
+            // enable interupts
+            Process::current->disableCount = 1;
+            Process::endIrq();
+            Pic::on();
             Process::current->kill(sig);
             return;
         case HANDLE:
+     //       Process::trace("HANDLE");
             // handle the signal
             setupFrame();
             return;

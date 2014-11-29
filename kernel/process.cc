@@ -149,6 +149,8 @@ long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long a
         return ERR_NOT_FOUND;
     }
 
+    name = K::strdup(fileName);
+
     /* Prepare address space for exec */
     addressSpace.exec();
 
@@ -341,7 +343,7 @@ void Process::dispatch(Process *prev) {
     if( !inSignal ){ // we do not want recursive signal handling
         inSignal = true;
 //        signalMutex->lock();
-        Signal::checkSignals(signalQueue);
+        Signal::checkSignals(Process::current->signalQueue);
 //        signalMutex->unlock();
         inSignal = false;
     }
