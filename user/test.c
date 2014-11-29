@@ -3,6 +3,8 @@
 volatile unsigned short numSignals = 0;
 volatile unsigned char isSignaled = 0;
 
+long s;
+
 int main();
 void contextTest();
 
@@ -22,9 +24,14 @@ void alarmHandler(long context) {
     puts("shutdown in T-");
     putdec(10 - numSignals);
     puts(" seconds!\n");
-    isSignaled = 1;
+    alarm(1);
     return;
 };
+
+void sigchldHandler(long context) {
+    puts("child exited and signaled\n");
+    isSignaled = 1;
+}
 
 //void handleSegfault(long context) {
 //    puts("handled SIGSEGV!!\n");
@@ -33,7 +40,7 @@ void alarmHandler(long context) {
 int main(){
     puts("in test\n");
 
-    long s = semaphore(0);
+    s = semaphore(0);
     long fk = fork();
     if(fk == 0){
         signal(SIGTEST, (void*)&sigtestHandler);
@@ -49,6 +56,16 @@ int main(){
         puts("\n");
     }
 
+    fk = fork();
+    if(fk == 0){
+        exit(0xCAFE);
+    } else {
+        // wait for child to die
+        signal(SIGCHLD, (void*)&sigchldHandler);
+        // wait for signal
+        while(!isSignaled);
+    }
+
     //puts("handle SIGSEGV\n");
     //signal(SIGSEGV, &handleSegfault);
 
@@ -60,12 +77,7 @@ int main(){
     if(fk == 0) {
         signal(SIGALRM, (void*)&alarmHandler);
         alarm(1);
-        while(numSignals < 10){
-            if(isSignaled) {
-                isSignaled = 0;
-                alarm(1);
-            }   
-        }
+        while(numSignals < 10);
         exit(0xCAFE);
     } else {
         long ret = join(fk);

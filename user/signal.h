@@ -4,6 +4,10 @@
 #define SIGTEST (0)
 #define SIGALRM (1)
 #define SIGSEGV (2)
+#define SIGCHLD (3)
+
+#define SIG_IGN (0)
+#define SIG_DFL (1)
 
 typedef struct {
     unsigned long cr2;

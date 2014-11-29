@@ -45,12 +45,16 @@ long Table::close(long i) {
 void Table::closeAll() {
     mutex.lock();
     for (int i=0; i<n; i++) {
+        // we do not want the child to signal us
+        if(array[i] && array[i]->type == PROCESS){
+            ((Process*)array[i])->parent = nullptr;
+        }
         Resource::unref(array[i]);
         array[i] = nullptr;
     }
     mutex.unlock();
 }
-    
+
 
 Table* Table::forkMe() {
     Table* tp = new Table(n);

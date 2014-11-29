@@ -4,6 +4,7 @@
 
 Child::Child(Process *parent) : Process("child",parent->resources->forkMe()) {
     parent->addressSpace.fork(&addressSpace);
+    this->parent = parent;
 }
 
 long Child::run() {

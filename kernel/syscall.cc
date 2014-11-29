@@ -154,7 +154,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
     case 16: /* signal */
         {
             //Process::trace("signal handler for signal %d is %X", a0, a1);
-            Process::current->signalHandlers[a0] = (SignalHandler*)a1;
+            Process::current->setSignalAction((signal_t)a0, (signal_action_t)a1);
             return 0;
         }
     case 17: /* alarm */

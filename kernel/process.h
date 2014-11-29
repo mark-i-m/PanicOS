@@ -103,18 +103,27 @@ public:
     // Address space for this process
     AddressSpace addressSpace;
 
+    // Parent process
+    Process *parent;
+
     // Resources
     Table *resources;
 
     // Signals
-    SignalHandler *signalHandlers[SIGNUM]; // signal handler
+    //
+    // signalHandlers contains the disposition of each signal
+    // If it contains a pointer, the pointer is a handle
+    // to the signal handler for that signal
+    SignalHandler *signalHandlers[SIGNUM]; // signal disposition
     SimpleQueue<Signal*> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
     bool inSignal;
 
     // get and set this process's action for the signal
     virtual signal_action_t getSignalAction(signal_t);
-    virtual void setSignalAction(signal_t, signal_action_t);
+
+    // returns an error code if not possible
+    virtual long setSignalAction(signal_t, signal_action_t);
 
     // signal this process
     virtual void signal(signal_t sig) {

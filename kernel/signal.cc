@@ -7,6 +7,13 @@
 // modeled on Linux kernel 3.17.1
 ////////////////////////////////////////////////////////////////////////////////
 
+SignalHandler *defaultDispositions[] = {
+    (SignalHandler*)(uint32_t)EXIT,
+    (SignalHandler*)(uint32_t)IGNORE,
+    (SignalHandler*)(uint32_t)EXIT,
+    (SignalHandler*)(uint32_t)IGNORE,
+};
+
 // assembly jumper function that calls sys_sigret
 struct __attribute__((packed)) jumpercode {
 public:
@@ -92,13 +99,14 @@ void Signal::doSignal(){
         case IGNORE:
             return;
         case EXIT:
-            // if there is a signal handler
-            if (Process::current->signalHandlers[sig]) {
-                setupFrame();
-            } else {
-                // kill the process with the signal code
-                Process::current->kill(sig);
-            }
+            // kill the process with the signal code
+            Process::current->kill(sig);
+            return;
+        case HANDLE:
+            // handle the signal
+            setupFrame();
+            return;
+        default: // should never happen
             return;
     }
 }

@@ -11,15 +11,20 @@ enum signal_t {
     SIGTEST,
     SIGALRM,
     SIGSEGV,
+    SIGCHLD,
     SIGNUM // ALWAYS the last one, represents the number of signals
 };
 
 enum signal_action_t {
     IGNORE, // will not trigger the sig handler
-    EXIT // can be handled
+    DEFAULT, // Converted to the default
+    EXIT, // kill the process
+    HANDLE // call the signal handler
 };
 
 typedef void (*SignalHandler)(uint32_t);
+
+extern SignalHandler *defaultDispositions[];
 
 struct jumpercode;
 
