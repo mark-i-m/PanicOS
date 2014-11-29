@@ -104,7 +104,7 @@ Process::Process(const char* name, Table *resources_) :
     signalMutex->lock();
     signalQueue = new SimpleQueue<Signal*>();
     context = new sigcontext();
-    *signalHandlers = *defaultDispositions;
+    Signal::initHandlers(signalHandlers);
     signalMutex->unlock();
 
     inSignal = false;
@@ -406,10 +406,10 @@ long Process::setSignalAction(signal_t sig, signal_action_t act){
 //    trace("sig%d = %x", sig, act);
     switch(act) {
         case DEFAULT:
-            signalHandlers[sig] = (SignalHandler*)(uint32_t)defaultDispositions[sig];
+            signalHandlers[sig] = (uint32_t)Signal::defaultDisposition(sig);
             break;
         default:
-            signalHandlers[sig] = (SignalHandler*)(uint32_t)act;
+            signalHandlers[sig] = (uint32_t)act;
     }
     return 0;
 }

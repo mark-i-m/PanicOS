@@ -7,13 +7,6 @@
 // modeled on Linux kernel 3.17.1
 ////////////////////////////////////////////////////////////////////////////////
 
-SignalHandler *defaultDispositions[] = {
-    (SignalHandler*)(uint32_t)EXIT,
-    (SignalHandler*)(uint32_t)IGNORE,
-    (SignalHandler*)(uint32_t)EXIT,
-    (SignalHandler*)(uint32_t)IGNORE,
-};
-
 // assembly jumper function that calls sys_sigret
 struct __attribute__((packed)) jumpercode {
 public:
@@ -123,5 +116,23 @@ void Signal::setupFrame(){
     Process::current->iDepth --;
     Process::current->disableCount = 0;
 
+//    Debug::printf("going to jmp to %x\n", Process::current->signalHandlers[sig]);
+
     switchToUser((uint32_t)Process::current->signalHandlers[sig], (uint32_t)frame, 0);
+}
+
+signal_action_t Signal::defaultDisposition(signal_t sig) {
+    switch(sig) {
+        case SIGTEST: return EXIT;
+        case SIGALRM: return IGNORE;
+        case SIGSEGV: return EXIT;
+        case SIGCHLD: return IGNORE;
+        default: return EXIT;
+    }
+}
+
+void Signal::initHandlers(uint32_t (&handlers)[SIGNUM]) {
+    for(int i = 0; i < SIGNUM; i++) {
+        handlers[i] = (uint32_t)defaultDisposition((signal_t)i);
+    }
 }

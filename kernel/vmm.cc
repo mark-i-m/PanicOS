@@ -135,14 +135,14 @@ void AddressSpace::activate() {
 void AddressSpace::handlePageFault(long* context, uint32_t va) {
     //Process::trace("page fault @ %x",va);
     if (va < 0x1000) {
-        Debug::printf("process %s, page fault %x\n",Process::current->name,va);
+        Debug::printf("process %s %d, page fault %x\n",Process::current->name, Process::current->id,va);
         Process::current->kill(ERR_PAGE_FAULT);
         //Process::current->signal(SIGSEGV);
     } else {
         if (va >= 0x80000000) {
             pmap(va,PhysMem::alloc(),true,true);
         } else {
-            Debug::panic("page fault @ %x",va);
+            Debug::panic("process %s %d, page fault %x\n",Process::current->name, Process::current->id,va);
         }
     }
 }

@@ -3,8 +3,6 @@
 volatile unsigned short numSignals = 0;
 volatile unsigned char isSignaled = 0;
 
-long s;
-
 int main();
 void contextTest();
 
@@ -40,7 +38,7 @@ void sigchldHandler(long context) {
 int main(){
     puts("in test\n");
 
-    s = semaphore(0);
+    long s = semaphore(0);
     long fk = fork();
     if(fk == 0){
         signal(SIGTEST, (void*)&sigtestHandler);
@@ -49,7 +47,7 @@ int main(){
         exit(0xBEEF);
     } else {
         down(s); // wait until the child has registered the signal handler
-        kill(fk, 0);
+        kill(fk, SIGTEST);
         long ret = join(fk);
         puts("child exited with code = 0x");
         puthex(ret);

@@ -24,8 +24,6 @@ enum signal_action_t {
 
 typedef void (*SignalHandler)(uint32_t);
 
-extern SignalHandler *defaultDispositions[];
-
 struct jumpercode;
 
 struct __attribute__((packed)) regs {
@@ -83,6 +81,8 @@ public:
 
     /* Handle all signals in this process signal queue */
     static void checkSignals(SimpleQueue<Signal*> *signals);
+    static signal_action_t defaultDisposition(signal_t);
+    static void initHandlers(uint32_t (&handlers)[SIGNUM]);
 
     /* Handle this signal */
     void doSignal();

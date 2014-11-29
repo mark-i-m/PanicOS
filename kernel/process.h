@@ -114,7 +114,7 @@ public:
     // signalHandlers contains the disposition of each signal
     // If it contains a pointer, the pointer is a handle
     // to the signal handler for that signal
-    SignalHandler *signalHandlers[SIGNUM]; // signal disposition
+    uint32_t signalHandlers[SIGNUM]; // signal disposition
     SimpleQueue<Signal*> *signalQueue; // pending signals
     Mutex *signalMutex; // protects the signal queue
     bool inSignal;
