@@ -6,6 +6,7 @@
 #include "gdt.h"
 #include "libk.h"
 #include "err.h"
+#include "signal.h"
 
 PhysMem::Node *PhysMem::firstFree = 0;
 uint32_t PhysMem::avail;
@@ -136,6 +137,7 @@ void AddressSpace::handlePageFault(long* context, uint32_t va) {
     if (va < 0x1000) {
         Debug::printf("process %s, page fault %x\n",Process::current->name,va);
         Process::current->kill(ERR_PAGE_FAULT);
+        //Process::current->signal(SIGSEGV);
     } else {
         if (va >= 0x80000000) {
             pmap(va,PhysMem::alloc(),true,true);

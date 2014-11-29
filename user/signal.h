@@ -3,6 +3,7 @@
 
 #define SIGTEST (0)
 #define SIGALRM (1)
+#define SIGSEGV (2)
 
 typedef struct {
     unsigned long cr2;

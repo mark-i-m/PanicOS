@@ -22,8 +22,13 @@ void alarmHandler(long context) {
     puts("shutdown in T-");
     putdec(10 - numSignals);
     puts(" seconds!\n");
+    isSignaled = 1;
     return;
 };
+
+//void handleSegfault(long context) {
+//    puts("handled SIGSEGV!!\n");
+//}
 
 int main(){
     puts("in test\n");
@@ -44,13 +49,23 @@ int main(){
         puts("\n");
     }
 
+    //puts("handle SIGSEGV\n");
+    //signal(SIGSEGV, &handleSegfault);
+
+    //*((unsigned int*)0) = 0xFACEBEEF;
+
     puts("counting down to shutdown\n");
 
     fk = fork();
     if(fk == 0) {
         signal(SIGALRM, (void*)&alarmHandler);
         alarm(1);
-        while(numSignals < 10);
+        while(numSignals < 10){
+            if(isSignaled) {
+                isSignaled = 0;
+                alarm(1);
+            }   
+        }
         exit(0xCAFE);
     } else {
         long ret = join(fk);

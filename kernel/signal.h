@@ -10,6 +10,7 @@
 enum signal_t {
     SIGTEST,
     SIGALRM,
+    SIGSEGV,
     SIGNUM // ALWAYS the last one, represents the number of signals
 };
 

@@ -401,7 +401,7 @@ public:
 
 class Alarm : public Timer {
 public:
-    uint32_t interval;
+    //uint32_t interval;
     bool overdue;
 };
 
@@ -442,7 +442,33 @@ void Process::sleepFor(uint32_t seconds) {
 void Process::alarm(uint32_t second) {
     Process::disable();
 
+    uint32_t target = second * Pit::hz + Pit::jiffies;
+    if (target > Pit::jiffies) {
         Alarm **pp = &alarms;
+        Alarm* p = alarms;
+        while (p) {
+            if (p->target == target) {
+                break;
+            } else if (p->target > target) {
+                p = nullptr;
+                break;
+            } else {
+                pp = (Alarm**) &p->next;
+                p = (Alarm*) p->next;
+            }
+        }
+        if (!p) {
+            p = new Alarm();
+            p->target = target;
+            p->next = *pp;
+            *pp = p;
+        }
+        p->waiting.addTail(Process::current);
+    } else {
+        Process::current->signal(SIGALRM);
+    }
+
+    /*    Alarm **pp = &alarms;
         Alarm* p = alarms;
         while (p) {
             if (p->interval == second) {
@@ -465,6 +491,7 @@ void Process::alarm(uint32_t second) {
         }
         // add to tail, but do NOT block
         p->waiting.addTail(Process::current);
+    */
 
     //Debug::printf("Added timer to process %s for %d seconds\n", Process::current->name, second);
     Process::enable();
@@ -490,18 +517,25 @@ void Process::tick() {
         }
     }
 
-    Alarm* firstTimer = alarms;
+    Alarm* firstAl = alarms;
+    if (firstAl) {
+        if (Pit::jiffies == firstAl->target) {
+            alarms = (Alarm*)firstAl->next;
+            while (!firstAl->waiting.isEmpty()) {
+                Process* p = firstAl->waiting.removeHead();
+                p->signal(SIGALRM);
+            }
+        }
+    }
+
+    /*Alarm* firstTimer = alarms;
     if(Process::current && !Process::current->inSignal) { // otherwise, we can deadlock
         while (firstTimer) {
             if (Pit::jiffies == firstTimer->target || firstTimer->overdue) {
                 for (uint32_t i = 0; i < firstTimer->waiting.size(); i++) {
                     Process* p = firstTimer->waiting.removeHead();
                     p->signal(SIGALRM);
-                    firstTimer->waiting.addTail(p);
                 }
-                // update the target
-                firstTimer->target += firstTimer->interval * Pit::hz;
-                firstTimer->overdue = false;
             }
             firstTimer = (Alarm*) firstTimer->next;
         }
@@ -512,7 +546,7 @@ void Process::tick() {
             }
             firstTimer = (Alarm*) firstTimer->next;
         }
-    }
+    }*/
 
     Process::enable();
 }
