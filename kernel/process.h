@@ -128,7 +128,11 @@ public:
     // signal this process
     void signal(signal_t sig) {
         signalMutex->lock();
+        // we do not want to receive signals while in this crit. reg.
+        Process::current->inSignal = true;
         signalQueue->addTail(new Signal(sig));
+        //Debug::printf("sig %d to %s#%d %X\n", sig, name, id, this);
+        Process::current->inSignal = false;
         signalMutex->unlock();
     }
 

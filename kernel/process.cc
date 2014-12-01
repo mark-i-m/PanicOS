@@ -368,6 +368,8 @@ void Process::yield(Queue<Process*> *q) {
             }
             me->state = BLOCKED;
             q->addTail(me);
+            
+            // Debug::printf("blocking process %s#%d %X\n", me->name, me->id, me);
         } else {
             /* no queue is specified, put me on the ready queue */
             me->makeReady();

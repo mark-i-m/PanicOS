@@ -63,12 +63,16 @@ int main(){
 
     fk = fork();
     if(fk == 0){
+        down(s); // wait for parent to register handler
         exit(0xCAFE);
     } else {
         // wait for child to die
         signal(SIGCHLD, (void*)&sigchldHandler);
+        up(s);
         // wait for signal
-        while(!isSignaled);
+        while(!isSignaled){
+        puts("X");
+        }
     }
 
     //puts("handle SIGSEGV\n");
