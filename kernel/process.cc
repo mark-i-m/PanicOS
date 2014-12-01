@@ -72,7 +72,7 @@ extern "C" void runProcess() {
 Process::Process(const char* name, Table *resources_) :
     Resource(ResourceType::PROCESS), name(name), parent(nullptr), resources(resources_)
 {
-    //Debug::printf("Process::Process %p",this);
+    //Debug::printf("Process::Process %p\n",this);
     id = nextId.getThenAdd(1);
     iDepth = 0;
     iCount = 0;
@@ -84,6 +84,7 @@ Process::Process(const char* name, Table *resources_) :
         Debug::panic("can't allocate stack");
     }
     stack = &stack[FUDGE];
+    //Debug::printf("stack=%X\n",stack);
     int idx = STACK_LONGS;
     stack[--idx] = 0;
     stack[--idx] = (long) runProcess;
@@ -294,6 +295,8 @@ void Process::exit(long exitCode) {
     Process* p = current;
 
     if (p) {
+        //trace("%s#%d %X exiting", p->name, p->id, p);
+
         p->exitCode = exitCode;
         p->resources->closeAll();
         p->onExit();
@@ -306,6 +309,7 @@ void Process::exit(long exitCode) {
 
         Process::disable();
         reaperQueue->addTail(p);
+        //Debug::printf("reaperQueue += %X\n",p);
         p->state = TERMINATED;
         current = nullptr;
 
@@ -324,9 +328,10 @@ void Process::dispatch(Process *prev) {
     uint32_t stackLongs = stackBytes / 4;
 
     if (stackLongs >= STACK_LONGS) {
-        Debug::printf("switching to %s\n",name);
-        Debug::printf("switching from %s\n",prev ? prev->name : "?");
-        Debug::panic("stack for %s is too big, %d bytes, iDepth:%d iCount:%d",name,stackBytes,iDepth,iCount);
+        Debug::printf("switching to %s#%d %X\n",name, id, this);
+        Debug::printf("switching from %s#%d %X\n",prev ? prev->name : "?", prev ? prev->id : -1, prev);
+        Debug::printf("stackBottom=%X, kesp=%X\n",stackBottom,kesp);
+        Debug::panic("stack for %s %d is too big, %d bytes, iDepth:%d iCount:%d",name, id, stackBytes,iDepth,iCount);
     }
 
     if (this != prev) {
@@ -358,6 +363,7 @@ void Process::yield(Queue<Process*> *q) {
         if (q) {
             /* a queue is specified, I'm blocking on that queue */
             if (me->iDepth != 0) {
+                Debug::printf("process %s#%d %X ", me->name, me->id, me);
                 Debug::panic("blocking while iDepth = %d",me->iDepth);
             }
             me->state = BLOCKED;

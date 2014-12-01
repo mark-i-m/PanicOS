@@ -17,6 +17,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
     switch (num) {
     case 0: /* exit */
+        //Process::trace("exiting");
         Process::exit(a0);
         return -1;
     case 1: /* putchar */
@@ -153,7 +154,8 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 16: /* signal */
         {
-            //Process::trace("signal handler for signal %d is %X", a0, a1);
+            //Debug::printf("iDepth = %d\n", Process::current->iDepth);
+            //Debug::printf("signal %d is %X\n", a0, a1);
             Process::current->setSignalAction((signal_t)a0, (signal_action_t)a1);
             return 0;
         }
@@ -165,13 +167,15 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
     case 0xff: /* sys_sigret */
         {
             // interrupts are disabled
+            //Process::trace("sys_sigret");
 
-            // update this process's context
-            *Process::current->context->registers =
-             Process::current->context->frame->registers;
+            //Debug::printf("uesp=%X\n", Process::current->context->frame->registers.esp);
+            //Debug::printf("upc=%X\n", Process::current->context->frame->registers.eip);
+
+            // NOTE: DO NOT USE Process::current->context->registers, because they are stale!!
 
             Process::current->inSignal = false;
-            sys_sigret((uint32_t)Process::current->context->registers);
+            sys_sigret((uint32_t)&(Process::current->context->frame->registers));
 
             Debug::panic("What?");
             return -1;

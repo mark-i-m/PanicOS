@@ -24,6 +24,7 @@ public:
         if (p) {
             uint32_t old = p->count.getThenAdd(-1);
             if (old == 1) {
+                //Debug::printf("deleting %X\n", p);
                 delete p;
                 return nullptr;
             }

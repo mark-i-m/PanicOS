@@ -55,29 +55,15 @@ jumpercode *Signal::putJumperCode(){
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
     // wait for this process to enter user mode
-    //Debug::printf("uesp=%X\n",Process::current->context->registers->esp);
-    if((uint32_t)Process::current->context->registers->esp < 0x80000000) return;
+    if((uint32_t)Process::current->context->registers->eip < 0x80000000) return;
 
     while(1){
-        bool isEmpty;
+        if(signals->isEmpty()) return;
 
-        // this is the only place where items are removed
-        // from the queue, so we don't have to worry about
-        // race conditions between this lock and the next
-//        Process::current->signalMutex->lock();
-        isEmpty = signals->isEmpty();
-//        Process::current->signalMutex->unlock();
+    //Debug::printf("pc=%X\n",Process::current->context->registers->eip);
+    //Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
 
-        if(isEmpty) return;
-
-//    Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
-        // remove the head of the list
-//        Process::current->signalMutex->lock();
-        Signal *sig = signals->removeHead();
-//        Process::current->signalMutex->unlock();
-
-        // handle the signal
-        sig->doSignal();
+        signals->removeHead()->doSignal();
         Process::current->checkKilled(); // in case a signal killed it
     }
 }
@@ -87,6 +73,8 @@ void Signal::doSignal(){
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
 
+    //Process::trace("doing signal %d", sig);
+
     switch(action) {
         case IGNORE:
  //           Process::trace("ignore");
@@ -95,9 +83,6 @@ void Signal::doSignal(){
    //         Process::trace("kill");
             // kill the process with the signal code
             // enable interupts
-            Process::current->disableCount = 1;
-            Process::endIrq();
-            Pic::on();
             Process::current->kill(sig);
             return;
         case HANDLE:

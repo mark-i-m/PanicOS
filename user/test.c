@@ -14,6 +14,7 @@ void sigtestHandler(regs *context) {
 }
 
 void contextTest(){
+    //puts("contextTest\n");
     exit(0xCAFE);
 }
 
@@ -26,8 +27,14 @@ void alarmHandler(long context) {
     return;
 };
 
-void sigchldHandler(long context) {
+void sigchldHandler(regs *context) {
     puts("child exited and signaled\n");
+    //puts("esp=");
+    //puthex(context->esp);
+    //puts("\n");
+    //puts("pc=");
+    //puthex(context->eip);
+    //puts("\n");
     isSignaled = 1;
 }
 
@@ -70,6 +77,8 @@ int main(){
     //*((unsigned int*)0) = 0xFACEBEEF;
 
     puts("counting down to shutdown\n");
+
+    signal(SIGCHLD, SIG_IGN);
 
     fk = fork();
     if(fk == 0) {
