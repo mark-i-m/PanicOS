@@ -296,6 +296,7 @@ void Process::exit(long exitCode) {
 
     if (p) {
         //trace("%s#%d %X exiting", p->name, p->id, p);
+        p->inSignal = false;
 
         p->exitCode = exitCode;
         p->resources->closeAll();
@@ -347,9 +348,7 @@ void Process::dispatch(Process *prev) {
     //Debug::printf("going to check signals\n");
     if( !inSignal ){ // we do not want recursive signal handling
         inSignal = true;
-//        signalMutex->lock();
         Signal::checkSignals(Process::current->signalQueue);
-//        signalMutex->unlock();
         inSignal = false;
     }
 //    Debug::printf("checked signals\n");
@@ -368,7 +367,7 @@ void Process::yield(Queue<Process*> *q) {
             }
             me->state = BLOCKED;
             q->addTail(me);
-            
+
             // Debug::printf("blocking process %s#%d %X\n", me->name, me->id, me);
         } else {
             /* no queue is specified, put me on the ready queue */

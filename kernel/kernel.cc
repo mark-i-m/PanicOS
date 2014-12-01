@@ -68,7 +68,7 @@ void kernelMain(void) {
 
     Keyboard::init();           // initialize the keyboard
 
-    Pit::init(10000 /* Hz */);   // enable the PIT, interrupts still disabled
+    Pit::init(1000 /* Hz */);   // enable the PIT, interrupts still disabled
 
     /* hdd */
     IDE hdd(3);

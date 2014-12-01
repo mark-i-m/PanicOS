@@ -55,13 +55,12 @@ jumpercode *Signal::putJumperCode(){
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
     // wait for this process to enter user mode
-    if((uint32_t)Process::current->context->registers->eip < 0x80000000) return;
+    //if((uint32_t)Process::current->context->registers->eip < 0x80000000) return;
+
+    //Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
 
     while(1){
         if(signals->isEmpty()) return;
-
-    //Debug::printf("pc=%X\n",Process::current->context->registers->eip);
-    //Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
 
         signals->removeHead()->doSignal();
         Process::current->checkKilled(); // in case a signal killed it
@@ -73,20 +72,19 @@ void Signal::doSignal(){
     //find out what the action for this signal should be
     signal_action_t action = Process::current->getSignalAction(sig);
 
-    //Process::trace("doing signal %d", sig);
-
     switch(action) {
         case IGNORE:
- //           Process::trace("ignore");
+            // Process::trace("ignore");
             return;
         case EXIT:
-   //         Process::trace("kill");
+            // Process::trace("kill");
             // kill the process with the signal code
             // enable interupts
             Process::current->kill(sig);
             return;
         case HANDLE:
-     //       Process::trace("HANDLE");
+            //Debug::printf("%s#%d %X doing signal %d\n", Process::current->name, Process::current->id, Process::current, sig);
+            // Process::trace("HANDLE");
             // handle the signal
             setupFrame();
             return;

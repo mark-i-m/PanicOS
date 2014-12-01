@@ -64,6 +64,7 @@ int main(){
     fk = fork();
     if(fk == 0){
         down(s); // wait for parent to register handler
+        //puts("exiting\n");
         exit(0xCAFE);
     } else {
         // wait for child to die
@@ -71,7 +72,7 @@ int main(){
         up(s);
         // wait for signal
         while(!isSignaled){
-        puts("X");
+            //puts("X");
         }
     }
 

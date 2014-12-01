@@ -43,7 +43,12 @@ public:
 	uint32_t esp;
 	uint32_t ss;
 
-    regs() {}
+    regs() :
+        cr2(0), ds(0), ebp(0),
+        edi(0), esi(0), edx(0),
+        ecx(0), ebx(0), eax(0),
+        eip(0), cs(0), flags(0),
+        esp(0), ss(0) {}
 };
 
 struct sigframe {

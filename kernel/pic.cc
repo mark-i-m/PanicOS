@@ -101,7 +101,7 @@ extern "C" void pic_irq(int irq, regs *registers) {
                      but interrupts are still disabled */
 
     // save user context
-    if (Process::current){
+    if (Process::current && registers->eip >= 0x80000000){
         //Debug::printf("registers = %X\n", registers);
         *(Process::current->context->registers) = *registers;
     }
