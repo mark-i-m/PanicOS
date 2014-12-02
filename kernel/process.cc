@@ -528,6 +528,7 @@ void Process::tick() {
                 Process* p = first->waiting.removeHead();
                 p->makeReady();
             }
+            delete first;
         }
     }
 
@@ -540,6 +541,7 @@ void Process::tick() {
                 Process* p = firstAl->waiting.removeHead();
                 p->signal(SIGALRM);
             }
+            delete firstAl;
         }
     }
 
