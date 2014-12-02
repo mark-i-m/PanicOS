@@ -48,13 +48,13 @@ int main(){
     long s = semaphore(0);
     long fk = fork();
     if(fk == 0){
-        signal(SIGTEST, (void*)&sigtestHandler);
+        signal(SIGINT, (void*)&sigtestHandler);
         up(s);
         while(!isSignaled);
         exit(0xBEEF);
     } else {
         down(s); // wait until the child has registered the signal handler
-        kill(fk, SIGTEST);
+        kill(fk, SIGINT);
         long ret = join(fk);
         puts("child exited with code = 0x");
         puthex(ret);

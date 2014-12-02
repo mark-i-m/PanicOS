@@ -9,17 +9,17 @@
 
 // assembly jumper function that calls sys_sigret
 struct __attribute__((packed)) jumpercode {
-public:
-    uint8_t movleax;
-    uint32_t sigret; // sigret syscall #
-    uint8_t interrupt; // int $0x64
-    uint32_t syscall; // interupt #
+    public:
+        uint8_t movleax;
+        uint32_t sigret; // sigret syscall #
+        uint8_t interrupt; // int $0x64
+        uint32_t syscall; // interupt #
 
-    jumpercode() :
-        movleax(0xB8),
-        sigret(0xFF),
-        interrupt(0xCD),
-        syscall(0x64) {}
+        jumpercode() :
+            movleax(0xB8),
+            sigret(0xFF),
+            interrupt(0xCD),
+            syscall(0x64) {}
 };
 
 // used from linux kernel
@@ -45,7 +45,7 @@ jumpercode *Signal::putJumperCode(){
     // get address on stack
     // put it after the sigframe (arbitrary choice)
     jumper = (jumpercode*)STACK_ALIGN(me->context->registers->esp
-                       - sizeof(sigframe) - sizeof(jumpercode));
+            - sizeof(sigframe) - sizeof(jumpercode));
     *jumper = jumpercode();
 
     return jumper;
@@ -54,14 +54,9 @@ jumpercode *Signal::putJumperCode(){
 // will run in kernel mode, with interrupts disabled
 void Signal::checkSignals(SimpleQueue<Signal*> *signals) {
 
-    // wait for this process to enter user mode
-    //if((uint32_t)Process::current->context->registers->eip < 0x80000000) return;
-
     //Process::trace("checking %s#%d's signal queue %x, %x", Process::current->name, Process::current->id, Process::current->signalQueue, signals);
 
-    while(1){
-        if(signals->isEmpty()) return;
-
+    if(!signals->isEmpty()){
         signals->removeHead()->doSignal();
         Process::current->checkKilled(); // in case a signal killed it
     }
@@ -105,18 +100,19 @@ void Signal::setupFrame(){
     Process::current->iDepth --;
     Process::current->disableCount = 0;
 
-//    Debug::printf("going to jmp to %x\n", Process::current->signalHandlers[sig]);
+    // Debug::printf("going to jmp to %x\n", Process::current->signalHandlers[sig]);
 
     switchToUser((uint32_t)Process::current->signalHandlers[sig], (uint32_t)frame, 0);
 }
 
 signal_action_t Signal::defaultDisposition(signal_t sig) {
     switch(sig) {
-        case SIGTEST: return EXIT;
-        case SIGALRM: return IGNORE;
-        case SIGSEGV: return EXIT;
+        case SIGINT: return EXIT;
+        case SIGALRM: return EXIT;
+                      //case SIGSEGV: return EXIT;
         case SIGCHLD: return IGNORE;
-        default: return EXIT;
+        case SIGKILL: return EXIT;
+        default: return NOTFOUND;
     }
 }
 
@@ -124,4 +120,8 @@ void Signal::initHandlers(uint32_t (&handlers)[SIGNUM]) {
     for(int i = 0; i < SIGNUM; i++) {
         handlers[i] = (uint32_t)defaultDisposition((signal_t)i);
     }
+}
+
+bool Signal::validateSignal(signal_t s) {
+    return defaultDisposition(s) != NOTFOUND;
 }

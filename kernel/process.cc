@@ -340,7 +340,7 @@ void Process::dispatch(Process *prev) {
         TSS::esp0((uint32_t) &stack[STACK_LONGS]);
         current = this;
         contextSwitch(
-            prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
+                prev ? &prev->kesp : 0, kesp, (disableCount == 0) ? (1<<9) : 0);
     }
 
     checkKilled();
@@ -351,7 +351,7 @@ void Process::dispatch(Process *prev) {
         Signal::checkSignals(Process::current->signalQueue);
         inSignal = false;
     }
-//    Debug::printf("checked signals\n");
+    //    Debug::printf("checked signals\n");
 
 }
 
@@ -409,10 +409,13 @@ signal_action_t Process::getSignalAction(signal_t s){
 }
 
 long Process::setSignalAction(signal_t sig, signal_action_t act){
-    if(sig >= SIGNUM && sig < (signal_t)0x80000000){
+    if(!Signal::validateSignal(sig) && sig < (signal_t)0x80000000){
         return ERR_NOT_POSSIBLE;
     }
-//    trace("sig%d = %x", sig, act);
+    if(sig == SIGKILL) { // cannot catch, block, or ignore
+        return ERR_NOT_POSSIBLE;
+    }
+    //    trace("sig%d = %x", sig, act);
     switch(act) {
         case DEFAULT:
             signalHandlers[sig] = (uint32_t)Signal::defaultDisposition(sig);
@@ -428,10 +431,10 @@ long Process::setSignalAction(signal_t sig, signal_action_t act){
 /*******************/
 
 class Timer {
-public:
-    uint32_t target;
-    Timer *next;
-    SimpleQueue<Process*> waiting;
+    public:
+        uint32_t target;
+        Timer *next;
+        SimpleQueue<Process*> waiting;
 };
 
 class Alarm : public Timer {};
@@ -473,7 +476,7 @@ void Process::sleepFor(uint32_t seconds) {
 void Process::alarm(uint32_t second) {
     Process::disable();
 
-//trace("disposition of sigalrm = %d", Process::current->getSignalAction(SIGALRM));
+    //trace("disposition of sigalrm = %d", Process::current->getSignalAction(SIGALRM));
 
     uint32_t target = second * Pit::hz + Pit::jiffies;
     if (target > Pit::jiffies) {
@@ -529,7 +532,7 @@ void Process::tick() {
     Alarm* firstAl = alarms;
     if (firstAl) {
         if (Pit::jiffies == firstAl->target) {
-  //          Debug::printf("alarm %d at time %d\n", firstAl->target / Pit::hz, Pit::seconds());
+            //          Debug::printf("alarm %d at time %d\n", firstAl->target / Pit::hz, Pit::seconds());
             alarms = (Alarm*)firstAl->next;
             while (!firstAl->waiting.isEmpty()) {
                 Process* p = firstAl->waiting.removeHead();

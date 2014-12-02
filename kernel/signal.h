@@ -8,10 +8,11 @@
 #include "stdint.h"
 
 enum signal_t {
-    SIGTEST,
-    SIGALRM,
-    SIGSEGV,
-    SIGCHLD,
+    SIGINT  = 2,
+    SIGALRM = 14,
+    //SIGSEGV = 11,
+    SIGKILL = 9,
+    SIGCHLD = 17,
     SIGNUM // ALWAYS the last one, represents the number of signals
 };
 
@@ -19,7 +20,8 @@ enum signal_action_t {
     IGNORE, // will not trigger the sig handler
     DEFAULT, // Converted to the default
     EXIT, // kill the process
-    HANDLE // call the signal handler
+    HANDLE, // call the signal handler
+    NOTFOUND // not a signal number
 };
 
 typedef void (*SignalHandler)(uint32_t);
@@ -88,6 +90,7 @@ public:
     static void checkSignals(SimpleQueue<Signal*> *signals);
     static signal_action_t defaultDisposition(signal_t);
     static void initHandlers(uint32_t (&handlers)[SIGNUM]);
+    static bool validateSignal(signal_t s);
 
     /* Handle this signal */
     void doSignal();

@@ -1,11 +1,14 @@
 #ifndef _USER_SIGNAL_H_
 #define _USER_SIGNAL_H_
 
-#define SIGTEST (0)
-#define SIGALRM (1)
-#define SIGSEGV (2)
-#define SIGCHLD (3)
+// Signals
+#define SIGINT (2)
+#define SIGALRM (14)
+//#define SIGSEGV (11)
+#define SIGCHLD (17)
+#define SIGKILL (9)
 
+// Dispositions
 #define SIG_IGN (0)
 #define SIG_DFL (1)
 
