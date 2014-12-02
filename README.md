@@ -138,10 +138,10 @@ The remaining protion of the internal signal API is defined in `machine.S` and `
 There and back again
 --------------------
 When the kernel needs to call a signal handler, several things happen:
-1. a stack frame is created for the handler in user space.
-2. jumper code is put on the user stack to return execution to kernel space after the signal handler returns.
-3. the user context (a `regs` struct) is copied to the user stack, and a pointer to it is put in the stack frame as a parameter to the handler.
-4. the process's `sigcontext` is updated to point to the user's copy of the registers.
+1.  a stack frame is created for the handler in user space.
+2.  jumper code is put on the user stack to return execution to kernel space after the signal handler returns.
+3.  the user context (a `regs` struct) is copied to the user stack, and a pointer to it is put in the stack frame as a parameter to the handler.
+4.  the process's `sigcontext` is updated to point to the user's copy of the registers.
 
 After everything is in place, `switchToUser` is called to go to user-mode. Voila! We are running in the signal handler.
 
