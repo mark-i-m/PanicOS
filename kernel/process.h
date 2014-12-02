@@ -129,10 +129,13 @@ public:
     void signal(signal_t sig) {
         signalMutex->lock();
         // we do not want to receive signals while in this crit. reg.
+        bool wasInSignal = Process::current->inSignal;
         Process::current->inSignal = true;
+
         signalQueue->addTail(new Signal(sig));
         //Debug::printf("sig %d to %s#%d %X\n", sig, name, id, this);
-        Process::current->inSignal = false;
+
+        Process::current->inSignal = wasInSignal;
         signalMutex->unlock();
     }
 
@@ -171,7 +174,7 @@ public:
     static void sleepFor(uint32_t seconds);
 
     // alarm every seconds seconds
-    static void alarm(uint32_t seconds);
+    static long alarm(uint32_t seconds);
 
     // called by pit for each tick
     static void tick();

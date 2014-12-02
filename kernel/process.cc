@@ -473,7 +473,7 @@ void Process::sleepFor(uint32_t seconds) {
     sleepUntil(Pit::seconds() + seconds);
 }
 
-void Process::alarm(uint32_t second) {
+long Process::alarm(uint32_t second) {
     Process::disable();
 
     //trace("disposition of sigalrm = %d", Process::current->getSignalAction(SIGALRM));
@@ -500,11 +500,13 @@ void Process::alarm(uint32_t second) {
             *pp = p;
         }
         p->waiting.addTail(Process::current);
+        Process::enable();
     } else {
+        Process::enable();
         Process::current->signal(SIGALRM);
     }
 
-    Process::enable();
+    return 0;
 }
 
 /* called for every timer tick */

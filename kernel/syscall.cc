@@ -160,8 +160,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             }
         case 17: /* alarm */
             {
-                Process::current->alarm(a0);
-                return 0;
+                return Process::current->alarm((uint32_t)a0);
             }
         case 0xff: /* sys_sigret */
             {
