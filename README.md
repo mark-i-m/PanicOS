@@ -1,5 +1,5 @@
-PanicOS
-=======
+## PanicOS ##
+=============
 
 This project implements Linux-style signals. It is not Linux-compliant, though.
 
@@ -74,6 +74,37 @@ typedef struct {
 
 ```
 This struct is mutable, and changes to it are reflected in the process's execution when it returns from the signal handler.
+
+Implementation
+==============
+
+Processes
+----------------------
+Processes now have a few extra instance members:
++ a queue of unhandled signals.
++ a mutex to protect the queue.
++ a boolean value denoting whether the signal is in a signal handler currently. This value is used to avoid deadlocks and race conditions without blocking (as a mutex would). I may decide to implement a `tryAndLock()` method for mutexes later.
++ a list of signal handlers and dispositions.
++ a context struct that saves the user-mode context of this process.
+
+They also have a few extra methods:
++ `void signal(signal_t sig)` adds the signal `sig` to the signal queue. The signal value must be validated beforehand.
++ `virtual signal_action_t getSignalAction(signal_t)` to get the disposition of this signal for this process.
++ `virtual long setSignalAction(signal_t, signal_action_t)` to set the disposition of this signal for this process.
+
+The internal signal API
+-----------------------
+The bulk of the kernel's signal implementation is housed in `signal.h` and `signal.cc`.
+
+`signal.h` defines a number of important structs and enums:
++ `regs` contains the values of the processor registers.
++ `signal_t` defines the different signals.
++ `signal_action_t` defines the different dispositions.
++ `sigframe` represents a signal handler's stack frame.
++ `sigcontext` represents the user-mode context of a process. It contains a pointer to the signal handler frame, if there is one, which is used by `sys_sigret`.
+
+The `Signal` class represents a signal and encapsulates the logic of switching to a signal handler. It contains the following methods:
+
 
 Make
 ----
