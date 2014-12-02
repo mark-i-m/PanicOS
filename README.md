@@ -85,7 +85,7 @@ Processes now have a few extra instance members:
 + a mutex to protect the queue.
 + a boolean value denoting whether the signal is in a signal handler currently. This value is used to avoid deadlocks and race conditions without blocking (as a mutex would). I may decide to implement a `tryAndLock()` method for mutexes later.
 + a list of signal handlers and dispositions.
-+ a context struct that saves the user-mode context of this process.
++ a context struct that saves the user-mode context of this process whenever we switch to kernel-mode.
 
 They also have a few extra methods:
 + `void signal(signal_t sig)` adds the signal `sig` to the signal queue. The signal value must be validated beforehand.
@@ -135,7 +135,22 @@ The `doSignal` method checks a signal's disposition (by calling `Process::getSig
 
 The remaining protion of the internal signal API is defined in `machine.S` and `syscall.cc`. `machine.S` contains the `sys_sigret` function which returns to the user execution (where the signal interrupted). `syscall.cc` contains the definitions of the system calls listed above. Both are pretty straight-forward, so I will not go into details.
 
+There and back again
+--------------------
+When the kernel needs to call a signal handler, several things happen:
+1. a stack frame is created for the handler in user space.
+2. jumper code is put on the user stack to return execution to kernel space after the signal handler returns.
+3. the user context (a `regs` struct) is copied to the user stack, and a pointer to it is put in the stack frame as a parameter to the handler.
+4. the process's `sigcontext` is updated to point to the user's copy of the registers.
 
+After everything is in place, `switchToUser` is called to go to user-mode. Voila! We are running in the signal handler.
+
+When the signal handler returns, it goes to the jumper code we set up. This calls the `sigreturn` system call. `sigreturn` simply calls `sys_sigret`, passing it a pointer to the `regs` struct on the user stack. `sys_sigret` restore this context and executes an `iret` instruction bringing us back to the normal execution of the process.
+
+Challenges
+----------
++ Understanding this mechanism was a long journey. I had originally implemented a much more convoluted system to go to and come back from signal handlers.
++ Concurrency was a pain. Solving a deadlock often introduced a race condition, and vice versa. Also, deciding when to use a mutex (as opposed to disabling interrupts) was often tricky.
 
 Make
 ----
