@@ -103,7 +103,38 @@ The bulk of the kernel's signal implementation is housed in `signal.h` and `sign
 + `sigframe` represents a signal handler's stack frame.
 + `sigcontext` represents the user-mode context of a process. It contains a pointer to the signal handler frame, if there is one, which is used by `sys_sigret`.
 
-The `Signal` class represents a signal and encapsulates the logic of switching to a signal handler. It contains the following methods:
+The `Signal` class represents a signal and encapsulates the logic of switching to a signal handler. It has the following declaration:
+```
+class Signal{
+private:
+    signal_t sig;
+
+    void setupFrame();
+    sigframe *getSignalFrame(jumpercode*);
+    jumpercode *putJumperCode();
+
+public:
+    Signal(signal_t sig) : sig(sig) {}
+
+    static void checkSignals(SimpleQueue<Signal*> *signals);
+    static signal_action_t defaultDisposition(signal_t);
+    static void initHandlers(uint32_t (&handlers)[SIGNUM]);
+    static bool validateSignal(signal_t s);
+    void doSignal();
+};
+```
+
++ `checkSignals` dequeues a single signal from the current process and handles it.
++ `defaultDisposition` returns the default disposition of the given signal
++ `initHandlers` initializes the given list of signal handlers and dispositions.
++ `validateSignal` returns true if the given signal is valid (false otherwise).
+
+These methods are mostly used for bookkeeping by processes.
+
+The `doSignal` method checks a signal's disposition (by calling `Process::getSignalAction`) and acts accordingly. If the dispositon is `HANDLE`, we prepare a stack frame and jump to the signal handler (as described below).
+
+The remaining protion of the internal signal API is defined in `machine.S` and `syscall.cc`. `machine.S` contains the `sys_sigret` function which returns to the user execution (where the signal interrupted). `syscall.cc` contains the definitions of the system calls listed above. Both are pretty straight-forward, so I will not go into details.
+
 
 
 Make
