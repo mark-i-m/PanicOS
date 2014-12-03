@@ -73,6 +73,7 @@ public:
             if (cnt == 0) return length - togo;
             p += cnt;
             togo -= cnt;
+            offset += cnt;
         }
         return length;
     }
