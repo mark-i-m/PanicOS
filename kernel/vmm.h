@@ -2,11 +2,12 @@
 #define _VMM_H_
 
 #include "stdint.h"
+#include "signal.h"
 
 // The physical memory interface
 class PhysMem {
     static uint32_t avail;
-    
+
     struct Node {
         Node* next;
     };
@@ -36,8 +37,9 @@ public:
     virtual ~AddressSpace();
     void punmap(uint32_t va);
     void pmap(uint32_t va, uint32_t pa, bool forUser, bool forWrite);
+    long mmap(uint32_t va);
     void activate();
-    void handlePageFault(long *context, uint32_t va);
+    void handlePageFault(regs *context, uint32_t va);
     void dump();
     void fork(AddressSpace *child);
     void exec(); /* prepare for exec */

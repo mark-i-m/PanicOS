@@ -162,6 +162,10 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             {
                 return Process::current->alarm((uint32_t)a0);
             }
+        case 18: /* mmap */
+            {
+                return Process::current->addressSpace.mmap((uint32_t)a0 >> 12 << 12);
+            }
         case 0xff: /* sys_sigret */
             {
                 // interrupts are disabled

@@ -109,7 +109,7 @@ signal_action_t Signal::defaultDisposition(signal_t sig) {
     switch(sig) {
         case SIGINT: return EXIT;
         case SIGALRM: return EXIT;
-                      //case SIGSEGV: return EXIT;
+        case SIGSEGV: return EXIT;
         case SIGCHLD: return IGNORE;
         case SIGKILL: return EXIT;
         default: return NOTFOUND;

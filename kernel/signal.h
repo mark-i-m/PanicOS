@@ -10,7 +10,7 @@
 enum signal_t {
     SIGINT  = 2,
     SIGALRM = 14,
-    //SIGSEGV = 11,
+    SIGSEGV = 11,
     SIGKILL = 9,
     SIGCHLD = 17,
     SIGNUM // ALWAYS the last one, represents the number of signals

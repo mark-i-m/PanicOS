@@ -6,7 +6,6 @@
 #include "gdt.h"
 #include "libk.h"
 #include "err.h"
-#include "signal.h"
 
 PhysMem::Node *PhysMem::firstFree = 0;
 uint32_t PhysMem::avail;
@@ -126,21 +125,46 @@ void AddressSpace::pmap(uint32_t va, uint32_t pa, bool forUser, bool forWrite) {
     Process::enable();
 }
 
+// creates a mapping for this virtual address.
+//
+// returns
+// va if success
+// 0  if already mapped
+// <0 if failed
+long AddressSpace::mmap(uint32_t va) {
+    // check if the address is already mapped
+    uint32_t i0 = (va >> 22) & 0x3ff;
+    if ((pd[i0] & P) != 0) {
+        uint32_t* pt = (uint32_t*) (pd[i0] & 0xfffff000);
+        if((pt[(va >> 12) & 0x3ff] & P) != 0) {
+            return 0;
+        }
+    }
+
+    pmap(va,PhysMem::alloc(),true,true);
+    return va;
+}
+
 void AddressSpace::activate() {
     Process::disable();
     vmm_on((uint32_t)pd);
     Process::enable();
 }
 
-void AddressSpace::handlePageFault(long* context, uint32_t va) {
+void AddressSpace::handlePageFault(regs *context, uint32_t va) {
     //Process::trace("page fault @ %x",va);
     if (va < 0x1000) {
         Debug::printf("process %s %d, page fault %x\n",Process::current->name, Process::current->id,va);
         Process::current->kill(ERR_PAGE_FAULT);
-        //Process::current->signal(SIGSEGV);
     } else {
         if (va >= 0x80000000) {
             pmap(va,PhysMem::alloc(),true,true);
+        } else if(va >= 0x400000) {
+            // send SIGSEGV if in the right portion of memory
+            // this will return us to user space
+            Process::current->inSignal = true;
+            Process::current->iDepth++;
+            Signal(SIGSEGV).doSignal();
         } else {
             Debug::panic("process %s %d, page fault %x\n",Process::current->name, Process::current->id,va);
         }
@@ -187,7 +211,7 @@ void AddressSpace::exec() {
     }
 }
 
-extern "C" void vmm_pageFault(long* context, uintptr_t va) {
+extern "C" void vmm_pageFault(regs *context, uintptr_t va) {
     //Process::trace("page fault: eip=%X", context[10]);
     Process* proc = Process::current;
     if (!proc) {
@@ -195,6 +219,26 @@ extern "C" void vmm_pageFault(long* context, uintptr_t va) {
             Debug::printf("%d -> %x\n",i,context[i]);
         }
         Debug::panic("page fault @ 0x%08x without current process",va);
+    }
+    // trap frame also contains the trap number: 6
+    // so everything is shifted over one word
+    struct trapFrame {
+        uint32_t trapNum;
+        uint32_t eip;
+        uint32_t cs;
+        uint32_t flags;
+        uint32_t esp;
+        uint32_t ss;
+    } *trapFrame = (struct trapFrame*)&context->eip;
+
+    // if we came from user-space, save the context
+    if (trapFrame->eip >= 0x80000000) {
+        *proc->context->registers = *context;
+        proc->context->registers->eip = trapFrame->eip;
+        proc->context->registers->cs = trapFrame->cs;
+        proc->context->registers->flags = trapFrame->flags;
+        proc->context->registers->esp = trapFrame->esp;
+        proc->context->registers->ss = trapFrame->ss;
     }
     proc->addressSpace.handlePageFault(context,va);
 }

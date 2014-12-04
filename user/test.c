@@ -14,7 +14,6 @@ void sigtestHandler(regs *context) {
 }
 
 void contextTest(){
-    //puts("contextTest\n");
     exit(0xCAFE);
 }
 
@@ -38,9 +37,9 @@ void sigchldHandler(regs *context) {
     isSignaled = 1;
 }
 
-//void handleSegfault(long context) {
-//    puts("handled SIGSEGV!!\n");
-//}
+void handleSegfault(regs *context) {
+    mmap((void*)context->cr2);
+}
 
 int main(){
     puts("in test\n");
@@ -64,26 +63,32 @@ int main(){
     fk = fork();
     if(fk == 0){
         down(s); // wait for parent to register handler
-        //puts("exiting\n");
         exit(0xCAFE);
     } else {
         // wait for child to die
         signal(SIGCHLD, (void*)&sigchldHandler);
         up(s);
         // wait for signal
-        while(!isSignaled){
-            //puts("X");
-        }
+        while(!isSignaled);
     }
 
-    //puts("handle SIGSEGV\n");
-    //signal(SIGSEGV, &handleSegfault);
+    signal(SIGCHLD, SIG_IGN);
 
-    //*((unsigned int*)0) = 0xFACEBEEF;
+    fk = fork();
+    if(fk == 0){
+        signal(SIGSEGV, &handleSegfault);
+        int value = 0xCAFE;
+        *(int*)0x500000 = value; // segv
+        exit(*(int*)0x500000);
+    } else {
+        // wait for child to die
+        long ret = join(fk);
+        puts("child exited with code = 0x");
+        puthex(ret);
+        puts("\n");
+    }
 
     puts("counting down to shutdown\n");
-
-    signal(SIGCHLD, SIG_IGN);
 
     fk = fork();
     if(fk == 0) {

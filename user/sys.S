@@ -177,11 +177,20 @@ alarm:
     int $100
     ret
 
-    # long sysreturn();
+    # long sysreturn()
     .global sysreturn
 sysreturn:
     mov $0xFF, %eax
     mov $0, %ecx
+    mov $0, %edx
+    int $100
+    ret
+
+    # long mmap(void *adr)
+    .global mmap
+mmap:
+    mov $18, %eax
+    mov 4(%esp), %ecx
     mov $0, %edx
     int $100
     ret

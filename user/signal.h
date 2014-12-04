@@ -4,7 +4,7 @@
 // Signals
 #define SIGINT (2)
 #define SIGALRM (14)
-//#define SIGSEGV (11)
+#define SIGSEGV (11)
 #define SIGCHLD (17)
 #define SIGKILL (9)
 
