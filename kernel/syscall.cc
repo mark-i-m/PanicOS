@@ -164,6 +164,9 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
             }
         case 18: /* mmap */
             {
+                if((uint32_t)a0 < 0x400000 || (uint32_t)a0 >= 0x80000000){
+                    return ERR_NOT_POSSIBLE;
+                }
                 return Process::current->addressSpace.mmap((uint32_t)a0 >> 12 << 12);
             }
         case 0xff: /* sys_sigret */
